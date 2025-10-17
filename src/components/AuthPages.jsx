@@ -118,8 +118,44 @@ const AuthPages = ({ setIsAuthenticated }) => {
       setPasswordStrength(checkPasswordStrength(value));
     }
   };
-
   const handleLogin = async (e) => {
+  e?.preventDefault?.();
+  
+  if (!validateLoginForm()) {
+    return;
+  }
+
+  setIsLoading(true);
+
+  try {
+    const response = await fetch('http://localhost:5000/api/auth/login', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        email: formData.email,
+        password: formData.password
+      })
+    });
+
+    const data = await response.json();
+
+    if (data.success) {
+      alert(`Welcome back, ${data.user.firstName}!`);
+      setIsAuthenticated(true);
+    } else {
+      setErrors({ submit: data.message || 'Login failed' });
+    }
+    
+  } catch (error) {
+    setErrors({ submit: 'Login failed. Please try again.' });
+  } finally {
+    setIsLoading(false);
+  }
+};
+
+  /*const handleLogin = async (e) => {
     e?.preventDefault?.();
     
     if (!validateLoginForm()) {
@@ -145,9 +181,48 @@ const AuthPages = ({ setIsAuthenticated }) => {
     } finally {
       setIsLoading(false);
     }
-  };
-
+  };*/
   const handleSignup = async (e) => {
+  e?.preventDefault?.();
+  
+  if (!validateSignupForm()) {
+    return;
+  }
+
+  setIsLoading(true);
+
+  try {
+    const response = await fetch('http://localhost:5000/api/auth/register', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        firstName: formData.firstName,
+        lastName: formData.lastName,
+        email: formData.email,
+        password: formData.password,
+        confirmPassword: formData.confirmPassword
+      })
+    });
+
+    const data = await response.json();
+
+    if (data.success) {
+      alert(`Account created successfully! Welcome, ${data.user.firstName}!`);
+      setIsAuthenticated(true);
+    } else {
+      setErrors({ submit: data.message || 'Signup failed' });
+    }
+    
+  } catch (error) {
+    setErrors({ submit: 'Account creation failed. Please try again.' });
+  } finally {
+    setIsLoading(false);
+  }
+};
+
+  /*const handleSignup = async (e) => {
     e?.preventDefault?.();
     
     if (!validateSignupForm()) {
@@ -175,7 +250,7 @@ const AuthPages = ({ setIsAuthenticated }) => {
     } finally {
       setIsLoading(false);
     }
-  };
+  };*/
 
   const handleGoogleAuth = () => {
     alert('Google authentication coming soon!');

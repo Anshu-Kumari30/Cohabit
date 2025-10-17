@@ -1,6 +1,7 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Home, Users, DollarSign, CheckSquare, Bell, Settings, LogOut, Plus, X, Trash2, AlertCircle, TrendingUp, PieChart } from 'lucide-react';
-
+import { expensesAPI, choresAPI } from '../services/api';
+import { toast } from 'react-toastify';
 const Dashboard = ({ setIsAuthenticated }) => {
   const [activeTab, setActiveTab] = useState('overview');
   const [showAddExpenseModal, setShowAddExpenseModal] = useState(false);
@@ -48,6 +49,30 @@ const Dashboard = ({ setIsAuthenticated }) => {
     email: ''
   });
 
+  // Fetch data from backend on component mount
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        // Fetch expenses
+        const expensesData = await expensesAPI.getAllExpenses();
+        if (expensesData.success) {
+          setExpenses(expensesData.expenses);
+        }
+
+        // Fetch chores
+        const choresData = await choresAPI.getAllChores();
+        if (choresData.success) {
+          setChores(choresData.chores);
+        }
+      } catch (error) {
+        console.error('Error fetching data:', error);
+        toast.error('Failed to load data');
+      }
+    };
+
+    fetchData();
+  }, []);
+
   const handleLogout = () => {
     if (window.confirm('Are you sure you want to logout?')) {
       setIsAuthenticated(false);
@@ -78,15 +103,15 @@ const Dashboard = ({ setIsAuthenticated }) => {
     return balances;
   };
 
-  const addExpense = () => {
-    if (!newExpense.description || !newExpense.amount) {
-      alert('Please fill in all required fields');
-      return;
-    }
+  const addExpense = async () => {
+  if (!newExpense.description || !newExpense.amount) {
+    toast.error('Please fill in all required fields');
+    return;
+  }
 
+  try {
     const paidByName = roommates.find(r => r.id === parseInt(newExpense.paidBy))?.name;
-    const expense = {
-      id: Date.now(),
+    const expenseData = {
       ...newExpense,
       amount: parseFloat(newExpense.amount),
       paidBy: parseInt(newExpense.paidBy),
@@ -94,42 +119,59 @@ const Dashboard = ({ setIsAuthenticated }) => {
       splitWith: newExpense.splitWith.map(id => parseInt(id))
     };
 
-    setExpenses([expense, ...expenses]);
-    setShowAddExpenseModal(false);
-    setNewExpense({
-      description: '',
-      amount: '',
-      paidBy: 1,
-      date: new Date().toISOString().split('T')[0],
-      category: 'utilities',
-      splitWith: [1]
-    });
-  };
-
-  const addChore = () => {
-    if (!newChore.title) {
-      alert('Please enter a chore title');
-      return;
+    const response = await expensesAPI.addExpense(expenseData);
+    
+    if (response.success) {
+      setExpenses([response.expense, ...expenses]);
+      toast.success('Expense added successfully!');
+      setShowAddExpenseModal(false);
+      setNewExpense({
+        description: '',
+        amount: '',
+        paidBy: 1,
+        date: new Date().toISOString().split('T')[0],
+        category: 'utilities',
+        splitWith: [1]
+      });
     }
+  } catch (error) {
+    console.error('Error adding expense:', error);
+    toast.error('Failed to add expense');
+  }
+};
 
+ const addChore = async () => {
+  if (!newChore.title) {
+    toast.error('Please enter a chore title');
+    return;
+  }
+
+  try {
     const assignedToName = roommates.find(r => r.id === parseInt(newChore.assignedTo))?.name;
-    const chore = {
-      id: Date.now(),
+    const choreData = {
       ...newChore,
       assignedTo: parseInt(newChore.assignedTo),
       assignedToName,
-      completed: false
     };
 
-    setChores([...chores, chore]);
-    setShowAddChoreModal(false);
-    setNewChore({
-      title: '',
-      assignedTo: 1,
-      dueDate: new Date().toISOString().split('T')[0],
-      priority: 'medium'
-    });
-  };
+    const response = await choresAPI.addChore(choreData);
+    
+    if (response.success) {
+      setChores([...chores, response.chore]);
+      toast.success('Chore added successfully!');
+      setShowAddChoreModal(false);
+      setNewChore({
+        title: '',
+        assignedTo: 1,
+        dueDate: new Date().toISOString().split('T')[0],
+        priority: 'medium'
+      });
+    }
+  } catch (error) {
+    console.error('Error adding chore:', error);
+    toast.error('Failed to add chore');
+  }
+};
 
   const addRoommate = () => {
     if (!newRoommate.name || !newRoommate.email) {
@@ -149,29 +191,55 @@ const Dashboard = ({ setIsAuthenticated }) => {
     setNewRoommate({ name: '', email: '' });
   };
 
-  const toggleChore = (choreId) => {
-    setChores(chores.map(chore => 
-      chore.id === choreId ? { ...chore, completed: !chore.completed } : chore
-    ));
-  };
-
-  const deleteExpense = (expenseId) => {
-    if (window.confirm('Delete this expense?')) {
-      setExpenses(expenses.filter(e => e.id !== expenseId));
+  const toggleChore = async (choreId) => {
+  try {
+    const response = await choresAPI.toggleChore(choreId);
+    if (response.success) {
+      setChores(chores.map(chore => 
+        chore.id === choreId ? response.chore : chore
+      ));
+      toast.success(response.chore.completed ? 'Chore completed!' : 'Chore reopened!');
     }
-  };
+  } catch (error) {
+    console.error('Error toggling chore:', error);
+    toast.error('Failed to update chore');
+  }
+};
 
-  const deleteChore = (choreId) => {
-    if (window.confirm('Delete this chore?')) {
-      setChores(chores.filter(c => c.id !== choreId));
+  const deleteExpense = async (expenseId) => {
+  if (window.confirm('Delete this expense?')) {
+    try {
+      const response = await expensesAPI.deleteExpense(expenseId);
+      if (response.success) {
+        setExpenses(expenses.filter(e => e.id !== expenseId));
+        toast.success('Expense deleted successfully!');
+      }
+    } catch (error) {
+      console.error('Error deleting expense:', error);
+      toast.error('Failed to delete expense');
     }
-  };
-
-  const removeRoommate = (roommateId) => {
+  }
+};
+const deleteChore = async (choreId) => {
+  if (window.confirm('Delete this chore?')) {
+    try {
+      const response = await choresAPI.deleteChore(choreId);
+      if (response.success) {
+        setChores(chores.filter(c => c.id !== choreId));
+        toast.success('Chore deleted successfully!');
+      }
+    } catch (error) {
+      console.error('Error deleting chore:', error);
+      toast.error('Failed to delete chore');
+    }
+  }
+};
+ const removeRoommate = (roommateId) => {
     if (window.confirm('Remove this roommate?')) {
       setRoommates(roommates.filter(r => r.id !== roommateId));
-    }
-  };
+    }
+  };
+
 
   const toggleSplitWith = (roommateId) => {
     setNewExpense(prev => ({
@@ -439,7 +507,7 @@ const Dashboard = ({ setIsAuthenticated }) => {
                           {chore.title}
                         </h3>
                         <p className="text-gray-400 text-sm mt-1">
-                          Assigned to {chore.assignedToName} • Due {chore.dueDate}
+                          Assigned to {chore.assignedToName} â€¢ Due {chore.dueDate}
                         </p>
                         <span className={`inline-block mt-2 text-xs px-2 py-1 rounded ${
                           chore.priority === 'high' ? 'bg-red-900 text-red-300' :
