@@ -58,27 +58,7 @@ npm install
 
 #### Configure Environment Variables
 
-Create a `.env` file in the `backend` directory:
-```env
-PORT=5000
-NODE_ENV=development
 
-# MongoDB Connection String
-MONGODB_URI=mongodb+srv://username:password@cluster.mongodb.net/cohabit?retryWrites=true&w=majority
-
-# JWT Configuration
-JWT_SECRET=your_super_secret_jwt_key_here_change_in_production
-JWT_EXPIRE=30d
-
-# Frontend URL for CORS
-FRONTEND_URL=http://localhost:3000
-```
-
-**Important:** Replace the following:
-- `username` - Your MongoDB Atlas username
-- `password` - Your MongoDB Atlas password
-- `cluster` - Your cluster name
-- `JWT_SECRET` - Generate a strong secret key
 
 #### Start the Backend Server
 ```bash
@@ -159,7 +139,6 @@ Cohabit/
 │   │   ├── house.js             # House management routes
 │   │   ├── expense.js           # Expense routes
 │   │   └── chore.js             # Chore routes
-│   ├── .env                     # Environment variables (not in git)
 │   ├── server.js                # Express server entry point
 │   └── package.json             # Backend dependencies
 │
@@ -235,9 +214,7 @@ Error: listen EADDRINUSE :::5000
 netstat -ano | findstr :5000
 taskkill /PID <PID> /F
 
-# Mac/Linux
-lsof -ti:5000 | xargs kill -9
-```
+
 
 ### Frontend Issues
 
@@ -271,13 +248,8 @@ npm install
 
 ## 🤝 Contributing
 
-Contributions are welcome! Please follow these steps:
+Contributions are welcome! 
 
-1. Fork the repository
-2. Create a feature branch (`git checkout -b feature/AmazingFeature`)
-3. Commit your changes (`git commit -m 'Add some AmazingFeature'`)
-4. Push to the branch (`git push origin feature/AmazingFeature`)
-5. Open a Pull Request
 
 
 
