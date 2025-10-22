@@ -166,30 +166,7 @@ Cohabit/
 - **Environment Variables** - Sensitive data stored in .env files
 - **CORS Protection** - Cross-origin resource sharing configuration
 
-## 🌐 API Endpoints
 
-### Authentication
-- `POST /api/auth/register` - Register new user
-- `POST /api/auth/login` - Login user
-- `GET /api/auth/me` - Get current user (protected)
-
-### Houses
-- `POST /api/houses` - Create new house (protected)
-- `GET /api/houses/my-house` - Get user's house (protected)
-- `POST /api/houses/join/:inviteCode` - Join house (protected)
-- `DELETE /api/houses/:houseId/leave` - Leave house (protected)
-
-### Expenses
-- `GET /api/expenses` - Get all expenses (protected)
-- `POST /api/expenses` - Create new expense (protected)
-- `DELETE /api/expenses/:id` - Delete expense (protected)
-- `GET /api/expenses/balances/calculate` - Calculate balances (protected)
-
-### Chores
-- `GET /api/chores` - Get all chores (protected)
-- `POST /api/chores` - Create new chore (protected)
-- `PATCH /api/chores/:id/toggle` - Toggle chore completion (protected)
-- `DELETE /api/chores/:id` - Delete chore (protected)
 
 ## 🐛 Troubleshooting
 
