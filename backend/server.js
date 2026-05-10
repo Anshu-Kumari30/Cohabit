@@ -54,6 +54,50 @@ async function initializeDatabase() {
       ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
     `);
 
+    await pool.query(`
+      CREATE TABLE IF NOT EXISTS houses (
+        id INT AUTO_INCREMENT PRIMARY KEY,
+        name VARCHAR(255) NOT NULL,
+        invite_code VARCHAR(50),
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+      ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+    `);
+
+    await pool.query(`
+      CREATE TABLE IF NOT EXISTS expenses (
+        id INT AUTO_INCREMENT PRIMARY KEY,
+        description VARCHAR(500) NOT NULL,
+        amount DECIMAL(10,2) NOT NULL,
+        paid_by INT NOT NULL,
+        paid_by_name VARCHAR(255),
+        date DATE,
+        category VARCHAR(255),
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+      ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+    `);
+
+    await pool.query(`
+      CREATE TABLE IF NOT EXISTS expense_splits (
+        id INT AUTO_INCREMENT PRIMARY KEY,
+        expense_id INT NOT NULL,
+        user_id INT NOT NULL,
+        FOREIGN KEY (expense_id) REFERENCES expenses(id) ON DELETE CASCADE
+      ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+    `);
+
+    await pool.query(`
+      CREATE TABLE IF NOT EXISTS chores (
+        id INT AUTO_INCREMENT PRIMARY KEY,
+        title VARCHAR(255) NOT NULL,
+        assigned_to INT,
+        assigned_to_name VARCHAR(255),
+        due_date DATE,
+        priority ENUM('low','medium','high') DEFAULT 'medium',
+        completed BOOLEAN DEFAULT FALSE,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+      ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+    `);
+
     console.log('✅ MySQL Connected and schema ready');
   } finally {
     await setupPool.end();
@@ -210,68 +254,180 @@ app.post('/api/auth/login', async (req, res) => {
   }
 });
 
-let expenses = [
-  { id: 1, description: 'Electricity Bill', amount: 150, paidBy: 1, paidByName: 'John Doe', date: '2025-10-10', category: 'utilities', splitWith: [1, 2, 3] },
-  { id: 2, description: 'Groceries', amount: 85, paidBy: 1, paidByName: 'John Doe', date: '2025-10-12', category: 'food', splitWith: [1, 2, 3] }
-];
+app.get('/api/expenses', async (req, res) => {
+  try {
+    const [rows] = await pool.query(
+      `SELECT id, description, amount, paid_by AS paidBy, paid_by_name AS paidByName, date, category
+       FROM expenses
+       ORDER BY created_at DESC`
+    );
 
-let chores = [
-  { id: 1, title: 'Clean Kitchen', assignedTo: 1, assignedToName: 'John Doe', dueDate: '2025-10-20', completed: false, priority: 'high' },
-  { id: 2, title: 'Take Out Trash', assignedTo: 1, assignedToName: 'John Doe', dueDate: '2025-10-19', completed: false, priority: 'medium' }
-];
+    for (const expense of rows) {
+      const [splits] = await pool.query(
+        'SELECT user_id FROM expense_splits WHERE expense_id = ?',
+        [expense.id]
+      );
+      expense.splitWith = splits.map((row) => row.user_id);
+    }
 
-app.get('/api/expenses', (req, res) => {
-  res.json({ success: true, expenses });
+    res.json({ success: true, expenses: rows });
+  } catch (error) {
+    console.error('Expenses Error:', error.message);
+    res.status(500).json({ success: false, message: 'Error fetching expenses' });
+  }
 });
 
-app.post('/api/expenses', (req, res) => {
-  const newExpense = {
-    id: expenses.length + 1,
-    ...req.body,
-    date: req.body.date || new Date().toISOString().split('T')[0],
-  };
+app.post('/api/expenses', async (req, res) => {
+  const { description, amount, paidBy, paidByName, date, category, splitWith } = req.body;
 
-  expenses.push(newExpense);
-  res.status(201).json({ success: true, expense: newExpense });
-});
-
-app.delete('/api/expenses/:id', (req, res) => {
-  const id = parseInt(req.params.id, 10);
-  expenses = expenses.filter((expense) => expense.id !== id);
-  res.json({ success: true, message: 'Expense deleted' });
-});
-
-app.get('/api/chores', (req, res) => {
-  res.json({ success: true, chores });
-});
-
-app.post('/api/chores', (req, res) => {
-  const newChore = {
-    id: chores.length + 1,
-    ...req.body,
-    completed: false,
-  };
-
-  chores.push(newChore);
-  res.status(201).json({ success: true, chore: newChore });
-});
-
-app.patch('/api/chores/:id/toggle', (req, res) => {
-  const id = parseInt(req.params.id, 10);
-  const chore = chores.find((item) => item.id === id);
-
-  if (!chore) {
-    return res.status(404).json({ success: false, message: 'Chore not found' });
+  if (!description || !amount || !paidBy) {
+    return res.status(400).json({ success: false, message: 'Missing required fields' });
   }
 
-  chore.completed = !chore.completed;
-  return res.json({ success: true, chore });
+  const expenseDate = date || new Date().toISOString().split('T')[0];
+  const splitIds = Array.isArray(splitWith) ? splitWith.map((id) => Number(id)) : [];
+
+  const connection = await pool.getConnection();
+  try {
+    await connection.beginTransaction();
+
+    const [result] = await connection.query(
+      `INSERT INTO expenses (description, amount, paid_by, paid_by_name, date, category)
+       VALUES (?, ?, ?, ?, ?, ?)` ,
+      [description, Number(amount), Number(paidBy), paidByName || null, expenseDate, category || null]
+    );
+
+    const expenseId = result.insertId;
+
+    for (const userId of splitIds) {
+      await connection.query(
+        'INSERT INTO expense_splits (expense_id, user_id) VALUES (?, ?)',
+        [expenseId, userId]
+      );
+    }
+
+    await connection.commit();
+
+    const createdExpense = {
+      id: expenseId,
+      description,
+      amount: Number(amount),
+      paidBy: Number(paidBy),
+      paidByName: paidByName || null,
+      date: expenseDate,
+      category: category || null,
+      splitWith: splitIds,
+    };
+
+    res.status(201).json({ success: true, expense: createdExpense });
+  } catch (error) {
+    await connection.rollback();
+    console.error('Add Expense Error:', error.message);
+    res.status(500).json({ success: false, message: 'Error adding expense' });
+  } finally {
+    connection.release();
+  }
 });
 
-app.delete('/api/chores/:id', (req, res) => {
-  const id = parseInt(req.params.id, 10);
-  chores = chores.filter((chore) => chore.id !== id);
-  res.json({ success: true, message: 'Chore deleted' });
+app.delete('/api/expenses/:id', async (req, res) => {
+  const id = Number(req.params.id);
+  try {
+    const [result] = await pool.query('DELETE FROM expenses WHERE id = ?', [id]);
+    if (result.affectedRows === 0) {
+      return res.status(404).json({ success: false, message: 'Expense not found' });
+    }
+    res.json({ success: true, message: 'Expense deleted' });
+  } catch (error) {
+    console.error('Delete Expense Error:', error.message);
+    res.status(500).json({ success: false, message: 'Error deleting expense' });
+  }
+});
+
+app.get('/api/chores', async (req, res) => {
+  try {
+    const [rows] = await pool.query(
+      `SELECT id, title, assigned_to AS assignedTo, assigned_to_name AS assignedToName,
+              due_date AS dueDate, completed, priority
+       FROM chores
+       ORDER BY created_at DESC`
+    );
+
+    res.json({ success: true, chores: rows });
+  } catch (error) {
+    console.error('Chores Error:', error.message);
+    res.status(500).json({ success: false, message: 'Error fetching chores' });
+  }
+});
+
+app.post('/api/chores', async (req, res) => {
+  const { title, assignedTo, assignedToName, dueDate, priority } = req.body;
+
+  if (!title) {
+    return res.status(400).json({ success: false, message: 'Missing title' });
+  }
+
+  try {
+    const [result] = await pool.query(
+      `INSERT INTO chores (title, assigned_to, assigned_to_name, due_date, priority, completed)
+       VALUES (?, ?, ?, ?, ?, ?)` ,
+      [title, assignedTo || null, assignedToName || null, dueDate || null, priority || 'medium', false]
+    );
+
+    const chore = {
+      id: result.insertId,
+      title,
+      assignedTo: assignedTo || null,
+      assignedToName: assignedToName || null,
+      dueDate: dueDate || null,
+      completed: false,
+      priority: priority || 'medium',
+    };
+
+    res.status(201).json({ success: true, chore });
+  } catch (error) {
+    console.error('Add Chore Error:', error.message);
+    res.status(500).json({ success: false, message: 'Error adding chore' });
+  }
+});
+
+app.patch('/api/chores/:id/toggle', async (req, res) => {
+  const id = Number(req.params.id);
+  try {
+    const [updateResult] = await pool.query(
+      'UPDATE chores SET completed = NOT completed WHERE id = ?',
+      [id]
+    );
+
+    if (updateResult.affectedRows === 0) {
+      return res.status(404).json({ success: false, message: 'Chore not found' });
+    }
+
+    const [rows] = await pool.query(
+      `SELECT id, title, assigned_to AS assignedTo, assigned_to_name AS assignedToName,
+              due_date AS dueDate, completed, priority
+       FROM chores WHERE id = ?`,
+      [id]
+    );
+
+    res.json({ success: true, chore: rows[0] });
+  } catch (error) {
+    console.error('Toggle Chore Error:', error.message);
+    res.status(500).json({ success: false, message: 'Error updating chore' });
+  }
+});
+
+app.delete('/api/chores/:id', async (req, res) => {
+  const id = Number(req.params.id);
+  try {
+    const [result] = await pool.query('DELETE FROM chores WHERE id = ?', [id]);
+    if (result.affectedRows === 0) {
+      return res.status(404).json({ success: false, message: 'Chore not found' });
+    }
+    res.json({ success: true, message: 'Chore deleted' });
+  } catch (error) {
+    console.error('Delete Chore Error:', error.message);
+    res.status(500).json({ success: false, message: 'Error deleting chore' });
+  }
 });
 
 initializeDatabase()
