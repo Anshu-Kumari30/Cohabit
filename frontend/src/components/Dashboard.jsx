@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Home, Users, DollarSign, CheckSquare, Bell, Settings, LogOut, Plus, X, Trash2, AlertCircle, TrendingUp, PieChart } from 'lucide-react';
-import { expensesAPI, choresAPI } from '../services/api';
+import { expensesAPI, choresAPI, usersAPI } from '../services/api';
 import { toast } from 'react-toastify';
 const Dashboard = ({ setIsAuthenticated }) => {
   const [activeTab, setActiveTab] = useState('overview');
@@ -9,37 +9,27 @@ const Dashboard = ({ setIsAuthenticated }) => {
   const [showAddRoommateModal, setShowAddRoommateModal] = useState(false);
   
   // Sample data - will be replaced with backend
-  const [currentUser] = useState({ id: 1, name: 'John Doe', email: 'john@example.com' });
-  const [roommates, setRoommates] = useState([
-    { id: 1, name: 'John Doe', email: 'john@example.com', avatar: 'JD', role: 'admin' },
-    { id: 2, name: 'Sarah Smith', email: 'sarah@example.com', avatar: 'SS', role: 'member' },
-    { id: 3, name: 'Mike Johnson', email: 'mike@example.com', avatar: 'MJ', role: 'member' }
-  ]);
+  const [currentUser, setCurrentUser] = useState(null);
+  const [roommates, setRoommates] = useState([]);
   
-  const [expenses, setExpenses] = useState([
-    { id: 1, description: 'Electricity Bill', amount: 150, paidBy: 1, paidByName: 'John Doe', date: '2025-10-10', category: 'utilities', splitWith: [1, 2, 3] },
-    { id: 2, description: 'Groceries', amount: 85, paidBy: 2, paidByName: 'Sarah Smith', date: '2025-10-12', category: 'food', splitWith: [1, 2, 3] },
-    { id: 3, description: 'Internet Bill', amount: 60, paidBy: 3, paidByName: 'Mike Johnson', date: '2025-10-08', category: 'utilities', splitWith: [1, 2, 3] }
-  ]);
+  const [expenses, setExpenses] = useState([]);
   
-  const [chores, setChores] = useState([
-    { id: 1, title: 'Clean Kitchen', assignedTo: 1, assignedToName: 'John Doe', dueDate: '2025-10-16', completed: false, priority: 'high' },
-    { id: 2, title: 'Take Out Trash', assignedTo: 2, assignedToName: 'Sarah Smith', dueDate: '2025-10-15', completed: true, priority: 'medium' },
-    { id: 3, title: 'Vacuum Living Room', assignedTo: 3, assignedToName: 'Mike Johnson', dueDate: '2025-10-17', completed: false, priority: 'low' }
-  ]);
+  const [chores, setChores] = useState([]);
 
   const [newExpense, setNewExpense] = useState({
     description: '',
     amount: '',
-    paidBy: 1,
+    paidBy: '',
     date: new Date().toISOString().split('T')[0],
     category: 'utilities',
-    splitWith: [1]
+    customCategory: '',
+    splitWith: []
   });
 
   const [newChore, setNewChore] = useState({
     title: '',
-    assignedTo: 1,
+    assignedTo: '',
+    customAssignee: '',
     dueDate: new Date().toISOString().split('T')[0],
     priority: 'medium'
   });
@@ -53,6 +43,38 @@ const Dashboard = ({ setIsAuthenticated }) => {
   useEffect(() => {
     const fetchData = async () => {
       try {
+        const usersData = await usersAPI.getAllUsers();
+        const usersList = Array.isArray(usersData) ? usersData : [];
+
+        const normalizedRoommates = usersList.map((user) => {
+          const id = user.id ?? user._id;
+          const firstName = user.firstName || user.first_name || '';
+          const lastName = user.lastName || user.last_name || '';
+          const fullName = `${firstName} ${lastName}`.trim();
+          const avatar = `${(firstName || ' ')[0]}${(lastName || ' ')[0]}`.toUpperCase();
+          return {
+            id,
+            name: fullName || user.email || 'Unknown',
+            email: user.email,
+            avatar,
+            role: user.role || 'member'
+          };
+        });
+
+        setRoommates(normalizedRoommates);
+        if (!currentUser && normalizedRoommates.length > 0) {
+          setCurrentUser(normalizedRoommates[0]);
+          setNewExpense((prev) => ({
+            ...prev,
+            paidBy: normalizedRoommates[0].id,
+            splitWith: [normalizedRoommates[0].id]
+          }));
+          setNewChore((prev) => ({
+            ...prev,
+            assignedTo: normalizedRoommates[0].id
+          }));
+        }
+
         // Fetch expenses
         const expensesData = await expensesAPI.getAllExpenses();
         if (expensesData.success) {
@@ -85,13 +107,26 @@ const Dashboard = ({ setIsAuthenticated }) => {
       balances[rm.id] = { name: rm.name, paid: 0, owes: 0, balance: 0 };
     });
 
+    if (!Array.isArray(expenses) || expenses.length === 0) {
+      return balances;
+    }
+
     expenses.forEach(expense => {
-      const splitCount = expense.splitWith.length;
-      const amountPerPerson = expense.amount / splitCount;
-      
-      balances[expense.paidBy].paid += expense.amount;
-      
-      expense.splitWith.forEach(personId => {
+      const amount = Number(expense.amount) || 0;
+      const paidBy = Number(expense.paidBy);
+      const splitWith = Array.isArray(expense.splitWith) ? expense.splitWith.map(Number) : [];
+      const splitCount = splitWith.length > 0 ? splitWith.length : 1;
+
+      if (!balances[paidBy]) {
+        // payer is not in roommates list, skip recording paid amount
+        return;
+      }
+
+      const amountPerPerson = amount / splitCount;
+      balances[paidBy].paid += amount;
+
+      splitWith.forEach(personId => {
+        if (!balances[personId]) return;
         balances[personId].owes += amountPerPerson;
       });
     });
@@ -110,13 +145,16 @@ const Dashboard = ({ setIsAuthenticated }) => {
   }
 
   try {
-    const paidByName = roommates.find(r => r.id === parseInt(newExpense.paidBy))?.name;
+    const paidById = Number(newExpense.paidBy);
+    const paidByName = roommates.find(r => r.id === paidById)?.name;
+    const category = newExpense.category === 'other' ? newExpense.customCategory : newExpense.category;
     const expenseData = {
       ...newExpense,
       amount: parseFloat(newExpense.amount),
-      paidBy: parseInt(newExpense.paidBy),
+      paidBy: paidById,
       paidByName,
-      splitWith: newExpense.splitWith.map(id => parseInt(id))
+      category,
+      splitWith: newExpense.splitWith.map(id => parseInt(id, 10))
     };
 
     const response = await expensesAPI.addExpense(expenseData);
@@ -128,10 +166,11 @@ const Dashboard = ({ setIsAuthenticated }) => {
       setNewExpense({
         description: '',
         amount: '',
-        paidBy: 1,
+        paidBy: currentUser?.id || '',
         date: new Date().toISOString().split('T')[0],
         category: 'utilities',
-        splitWith: [1]
+        customCategory: '',
+        splitWith: currentUser?.id ? [currentUser.id] : []
       });
     }
   } catch (error) {
@@ -147,10 +186,13 @@ const Dashboard = ({ setIsAuthenticated }) => {
   }
 
   try {
-    const assignedToName = roommates.find(r => r.id === parseInt(newChore.assignedTo))?.name;
+    const assignedToId = newChore.assignedTo === 'other' ? null : Number(newChore.assignedTo);
+    const assignedToName = newChore.assignedTo === 'other'
+      ? newChore.customAssignee
+      : roommates.find(r => r.id === assignedToId)?.name;
     const choreData = {
       ...newChore,
-      assignedTo: parseInt(newChore.assignedTo),
+      assignedTo: assignedToId,
       assignedToName,
     };
 
@@ -162,7 +204,8 @@ const Dashboard = ({ setIsAuthenticated }) => {
       setShowAddChoreModal(false);
       setNewChore({
         title: '',
-        assignedTo: 1,
+        assignedTo: currentUser?.id || '',
+        customAssignee: '',
         dueDate: new Date().toISOString().split('T')[0],
         priority: 'medium'
       });
@@ -634,6 +677,15 @@ const deleteChore = async (choreId) => {
                   <option value="rent">Rent</option>
                   <option value="other">Other</option>
                 </select>
+                {newExpense.category === 'other' && (
+                  <input
+                    type="text"
+                    value={newExpense.customCategory}
+                    onChange={(e) => setNewExpense({ ...newExpense, customCategory: e.target.value })}
+                    className="mt-2 w-full px-4 py-2 bg-gray-800 border border-gray-700 rounded-lg text-white focus:border-blue-500 focus:outline-none"
+                    placeholder="Enter category"
+                  />
+                )}
               </div>
               <div>
                 <label className="block text-sm font-medium text-gray-300 mb-2">Split With</label>
@@ -693,7 +745,17 @@ const deleteChore = async (choreId) => {
                   {roommates.map(rm => (
                     <option key={rm.id} value={rm.id}>{rm.name}</option>
                   ))}
+                  <option value="other">Other</option>
                 </select>
+                {newChore.assignedTo === 'other' && (
+                  <input
+                    type="text"
+                    value={newChore.customAssignee}
+                    onChange={(e) => setNewChore({ ...newChore, customAssignee: e.target.value })}
+                    className="mt-2 w-full px-4 py-2 bg-gray-800 border border-gray-700 rounded-lg text-white focus:border-cyan-500 focus:outline-none"
+                    placeholder="Enter name"
+                  />
+                )}
               </div>
               <div>
                 <label className="block text-sm font-medium text-gray-300 mb-2">Due Date</label>

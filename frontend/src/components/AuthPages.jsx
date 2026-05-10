@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Home, Eye, EyeOff, Mail, User, Lock, AlertCircle, CheckCircle2, LogIn, UserPlus } from 'lucide-react';
+import { authAPI } from '../services/api';
 
 const AuthPages = ({ setIsAuthenticated }) => {
   const [currentPage, setCurrentPage] = useState('login');
@@ -128,18 +129,7 @@ const AuthPages = ({ setIsAuthenticated }) => {
   setIsLoading(true);
 
   try {
-    const response = await fetch('http://localhost:5000/api/auth/login', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        email: formData.email,
-        password: formData.password
-      })
-    });
-
-    const data = await response.json();
+    const data = await authAPI.login(formData.email, formData.password);
 
     if (data.success) {
       alert(`Welcome back, ${data.user.firstName}!`);
@@ -147,9 +137,9 @@ const AuthPages = ({ setIsAuthenticated }) => {
     } else {
       setErrors({ submit: data.message || 'Login failed' });
     }
-    
   } catch (error) {
-    setErrors({ submit: 'Login failed. Please try again.' });
+    const msg = error?.response?.data?.message || 'Login failed. Please try again.';
+    setErrors({ submit: msg });
   } finally {
     setIsLoading(false);
   }
@@ -192,21 +182,15 @@ const AuthPages = ({ setIsAuthenticated }) => {
   setIsLoading(true);
 
   try {
-    const response = await fetch('http://localhost:5000/api/auth/register', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        firstName: formData.firstName,
-        lastName: formData.lastName,
-        email: formData.email,
-        password: formData.password,
-        confirmPassword: formData.confirmPassword
-      })
-    });
+    const userData = {
+      firstName: formData.firstName,
+      lastName: formData.lastName,
+      email: formData.email,
+      password: formData.password,
+      confirmPassword: formData.confirmPassword,
+    };
 
-    const data = await response.json();
+    const data = await authAPI.register(userData);
 
     if (data.success) {
       alert(`Account created successfully! Welcome, ${data.user.firstName}!`);
@@ -214,9 +198,9 @@ const AuthPages = ({ setIsAuthenticated }) => {
     } else {
       setErrors({ submit: data.message || 'Signup failed' });
     }
-    
   } catch (error) {
-    setErrors({ submit: 'Account creation failed. Please try again.' });
+    const msg = error?.response?.data?.message || 'Account creation failed. Please try again.';
+    setErrors({ submit: msg });
   } finally {
     setIsLoading(false);
   }
@@ -253,7 +237,10 @@ const AuthPages = ({ setIsAuthenticated }) => {
   };*/
 
   const handleGoogleAuth = () => {
-    alert('Google authentication coming soon!');
+    setErrors((prev) => ({
+      ...prev,
+      submit: 'Google sign-in is not enabled yet. Please use email and password.'
+    }));
   };
 
   const getPasswordStrengthColor = () => {
@@ -626,6 +613,7 @@ const AuthPages = ({ setIsAuthenticated }) => {
           </div>
 
           <button
+            type="button"
             onClick={handleGoogleAuth}
             className="w-full bg-gray-800 border-2 border-gray-700 text-gray-300 py-3 px-4 rounded-lg hover:bg-gray-700 hover:border-blue-500 transition-all duration-300 flex items-center justify-center font-medium shadow-sm"
           >
