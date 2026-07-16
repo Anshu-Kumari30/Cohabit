@@ -1,9 +1,11 @@
 import React, { useState, useEffect } from 'react';
-import { Home, Eye, EyeOff, Mail, User, Lock, AlertCircle, CheckCircle2, LogIn, UserPlus } from 'lucide-react';
+import { motion, AnimatePresence } from 'framer-motion';
+import { GoogleLogin } from '@react-oauth/google';
+import { Home, Eye, EyeOff, Mail, User, Lock, AlertCircle, CheckCircle2, LogIn, UserPlus, Sparkles } from 'lucide-react';
 import { authAPI } from '../services/api';
 
-const AuthPages = ({ setIsAuthenticated }) => {
-  const [currentPage, setCurrentPage] = useState('login');
+const AuthPages = ({ setIsAuthenticated, initialPage = 'login' }) => {
+  const [currentPage, setCurrentPage] = useState(initialPage);
   const [formData, setFormData] = useState({
     firstName: '',
     lastName: '',
@@ -17,6 +19,7 @@ const AuthPages = ({ setIsAuthenticated }) => {
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [passwordStrength, setPasswordStrength] = useState(0);
+  const [focusedField, setFocusedField] = useState(null);
 
   useEffect(() => {
     setFormData({
@@ -119,6 +122,7 @@ const AuthPages = ({ setIsAuthenticated }) => {
       setPasswordStrength(checkPasswordStrength(value));
     }
   };
+
   const handleLogin = async (e) => {
   e?.preventDefault?.();
   
@@ -132,12 +136,14 @@ const AuthPages = ({ setIsAuthenticated }) => {
     const data = await authAPI.login(formData.email, formData.password);
 
     if (data.success) {
-      alert(`Welcome back, ${data.user.firstName}!`);
+      localStorage.setItem('token', data.token);
+      localStorage.setItem('user', JSON.stringify(data.user));
       setIsAuthenticated(true);
     } else {
       setErrors({ submit: data.message || 'Login failed' });
     }
   } catch (error) {
+    console.error('Login error:', error);
     const msg = error?.response?.data?.message || 'Login failed. Please try again.';
     setErrors({ submit: msg });
   } finally {
@@ -145,33 +151,6 @@ const AuthPages = ({ setIsAuthenticated }) => {
   }
 };
 
-  /*const handleLogin = async (e) => {
-    e?.preventDefault?.();
-    
-    if (!validateLoginForm()) {
-      return;
-    }
-
-    setIsLoading(true);
-
-    try {
-      await new Promise(resolve => setTimeout(resolve, 1500));
-      
-      // Store user data (in real app, this would come from backend)
-      const userData = {
-        email: formData.email,
-        name: formData.email.split('@')[0]
-      };
-      
-      // Set authentication to true
-      setIsAuthenticated(true);
-      
-    } catch (error) {
-      setErrors({ submit: 'Login failed. Please check your credentials and try again.' });
-    } finally {
-      setIsLoading(false);
-    }
-  };*/
   const handleSignup = async (e) => {
   e?.preventDefault?.();
   
@@ -193,12 +172,14 @@ const AuthPages = ({ setIsAuthenticated }) => {
     const data = await authAPI.register(userData);
 
     if (data.success) {
-      alert(`Account created successfully! Welcome, ${data.user.firstName}!`);
+      localStorage.setItem('token', data.token);
+      localStorage.setItem('user', JSON.stringify(data.user));
       setIsAuthenticated(true);
     } else {
       setErrors({ submit: data.message || 'Signup failed' });
     }
   } catch (error) {
+    console.error('Signup error:', error);
     const msg = error?.response?.data?.message || 'Account creation failed. Please try again.';
     setErrors({ submit: msg });
   } finally {
@@ -206,41 +187,29 @@ const AuthPages = ({ setIsAuthenticated }) => {
   }
 };
 
-  /*const handleSignup = async (e) => {
-    e?.preventDefault?.();
-    
-    if (!validateSignupForm()) {
-      return;
-    }
-
-    setIsLoading(true);
-
+  const handleGoogleSuccess = async (credentialResponse) => {
     try {
-      await new Promise(resolve => setTimeout(resolve, 2000));
-      
-      // Store user data (in real app, this would come from backend)
-      const userData = {
-        email: formData.email,
-        firstName: formData.firstName,
-        lastName: formData.lastName,
-        name: `${formData.firstName} ${formData.lastName}`
-      };
-      
-      // Set authentication to true
-      setIsAuthenticated(true);
-      
+      setIsLoading(true);
+      setErrors({});
+      const data = await authAPI.googleLogin(credentialResponse.credential);
+      if (data.success) {
+        localStorage.setItem('token', data.token);
+        localStorage.setItem('user', JSON.stringify(data.user));
+        setIsAuthenticated(true);
+      } else {
+        setErrors({ submit: data.message || 'Google sign-in failed' });
+      }
     } catch (error) {
-      setErrors({ submit: 'Account creation failed. Please try again.' });
+      console.error('Google auth error:', error);
+      const msg = error?.response?.data?.message || 'Google sign-in failed. Please try again.';
+      setErrors({ submit: msg });
     } finally {
       setIsLoading(false);
     }
-  };*/
+  };
 
-  const handleGoogleAuth = () => {
-    setErrors((prev) => ({
-      ...prev,
-      submit: 'Google sign-in is not enabled yet. Please use email and password.'
-    }));
+  const handleGoogleError = () => {
+    setErrors({ submit: 'Google sign-in was cancelled or failed. Please try again.' });
   };
 
   const getPasswordStrengthColor = () => {
@@ -259,397 +228,480 @@ const AuthPages = ({ setIsAuthenticated }) => {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-900 via-blue-950 to-black relative overflow-hidden flex items-center justify-center p-4">
-      {/* Decorative background elements */}
+      {/* Animated background particles */}
       <div className="absolute inset-0 overflow-hidden pointer-events-none">
-        <div className="absolute top-20 left-10 w-64 h-64 bg-blue-500 rounded-full mix-blend-screen filter blur-3xl opacity-30 animate-blob"></div>
-        <div className="absolute top-40 right-20 w-72 h-72 bg-cyan-400 rounded-full mix-blend-screen filter blur-3xl opacity-20 animate-blob animation-delay-2000"></div>
-        <div className="absolute bottom-20 left-40 w-64 h-64 bg-blue-600 rounded-full mix-blend-screen filter blur-3xl opacity-25 animate-blob animation-delay-4000"></div>
+        <div className="absolute -top-40 -left-40 w-80 h-80 bg-blue-500 rounded-full mix-blend-screen filter blur-3xl opacity-20 animate-pulse" style={{ animationDuration: '8s' }}></div>
+        <div className="absolute -bottom-40 -right-40 w-96 h-96 bg-cyan-400 rounded-full mix-blend-screen filter blur-3xl opacity-15 animate-pulse" style={{ animationDuration: '10s' }}></div>
+        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-64 h-64 bg-purple-500 rounded-full mix-blend-screen filter blur-3xl opacity-10 animate-pulse" style={{ animationDuration: '6s' }}></div>
+        {/* Grid overlay */}
+        <div className="absolute inset-0 bg-[linear-gradient(rgba(59,130,246,0.03)_1px,transparent_1px),linear-gradient(90deg,rgba(59,130,246,0.03)_1px,transparent_1px)] bg-[size:64px_64px]"></div>
       </div>
 
-      <div className="bg-gray-900 rounded-2xl shadow-2xl w-full max-w-md overflow-hidden relative z-10 border border-blue-500" style={{ boxShadow: '0 0 40px rgba(59, 130, 246, 0.5)' }}>
-        
-        {/* Header */}
-        <div className="bg-gradient-to-r from-blue-600 to-cyan-500 px-8 py-8 text-center">
-          <div className="flex items-center justify-center mb-3">
-            <Home className="h-10 w-10 text-white mr-3" />
-            <h1 className="text-3xl font-bold text-white">Roommate Tracker</h1>
+      <motion.div
+        initial={{ opacity: 0, y: 20, scale: 0.95 }}
+        animate={{ opacity: 1, y: 0, scale: 1 }}
+        transition={{ duration: 0.5, ease: 'easeOut' }}
+        className="w-full max-w-md relative z-10"
+      >
+        {/* Glass card container */}
+        <div className="backdrop-blur-xl bg-gray-900/80 rounded-3xl shadow-2xl overflow-hidden border border-blue-500/20"
+          style={{ boxShadow: '0 0 60px rgba(59, 130, 246, 0.15), inset 0 1px 0 rgba(59, 130, 246, 0.1)' }}
+        >
+          {/* Animated gradient header */}
+          <div className="relative overflow-hidden px-8 pt-10 pb-8 text-center bg-gradient-to-br from-blue-600/90 via-blue-700/50 to-cyan-600/30">
+            <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top_right,rgba(59,130,246,0.3),transparent_50%)]"></div>
+            <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_bottom_left,rgba(6,182,212,0.2),transparent_50%)]"></div>
+            
+            {/* Logo icon */}
+            <motion.div
+              initial={{ scale: 0 }}
+              animate={{ scale: 1 }}
+              transition={{ delay: 0.2, type: 'spring', stiffness: 200 }}
+              className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-white/10 backdrop-blur-sm border border-white/20 mb-4"
+            >
+              <Home className="h-8 w-8 text-white" />
+            </motion.div>
+
+            <motion.h1
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.3 }}
+              className="text-2xl font-bold text-white tracking-tight"
+            >
+              Cohabit
+            </motion.h1>
+            <motion.p
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.4 }}
+              className="text-blue-200/80 text-sm mt-1.5 font-light"
+            >
+              {currentPage === 'login'
+                ? 'Welcome back! Sign in to your account'
+                : 'Create your account to get started'}
+            </motion.p>
           </div>
-          <p className="text-blue-100 text-sm">
-            {currentPage === 'login' ? 'Welcome back! Please sign in to continue' : 'Create your account to get started'}
-          </p>
-        </div>
 
-        {/* Tab Navigation */}
-        <div className="flex border-b border-gray-700 bg-gray-800">
-          <button
-            onClick={() => setCurrentPage('login')}
-            className={`flex-1 py-4 px-4 text-sm font-medium transition-all ${
-              currentPage === 'login'
-                ? 'text-blue-400 border-b-2 border-blue-400 bg-gray-900'
-                : 'text-gray-400 hover:text-blue-400 hover:bg-gray-700'
-            }`}
-          >
-            <LogIn className="h-4 w-4 inline mr-2" />
-            Sign In
-          </button>
-          <button
-            onClick={() => setCurrentPage('signup')}
-            className={`flex-1 py-4 px-4 text-sm font-medium transition-all ${
-              currentPage === 'signup'
-                ? 'text-blue-400 border-b-2 border-blue-400 bg-gray-900'
-                : 'text-gray-400 hover:text-blue-400 hover:bg-gray-700'
-            }`}
-          >
-            <UserPlus className="h-4 w-4 inline mr-2" />
-            Sign Up
-          </button>
-        </div>
+          {/* Tab Navigation - Pill style */}
+          <div className="flex mx-6 mt-6 p-1 bg-gray-800/80 rounded-2xl border border-gray-700/50">
+            <button
+              onClick={() => setCurrentPage('login')}
+              className={`relative flex-1 py-2.5 px-4 text-sm font-medium rounded-xl transition-all duration-300 ${
+                currentPage === 'login'
+                  ? 'text-white'
+                  : 'text-gray-400 hover:text-gray-200'
+              }`}
+            >
+              {currentPage === 'login' && (
+                <motion.div
+                  layoutId="auth-tab-bg"
+                  className="absolute inset-0 bg-gradient-to-r from-blue-600 to-cyan-500 rounded-xl"
+                  transition={{ type: 'spring', stiffness: 400, damping: 30 }}
+                />
+              )}
+              <span className="relative z-10 flex items-center justify-center">
+                <LogIn className="h-4 w-4 mr-1.5" />
+                Sign In
+              </span>
+            </button>
+            <button
+              onClick={() => setCurrentPage('signup')}
+              className={`relative flex-1 py-2.5 px-4 text-sm font-medium rounded-xl transition-all duration-300 ${
+                currentPage === 'signup'
+                  ? 'text-white'
+                  : 'text-gray-400 hover:text-gray-200'
+              }`}
+            >
+              {currentPage === 'signup' && (
+                <motion.div
+                  layoutId="auth-tab-bg"
+                  className="absolute inset-0 bg-gradient-to-r from-blue-600 to-cyan-500 rounded-xl"
+                  transition={{ type: 'spring', stiffness: 400, damping: 30 }}
+                />
+              )}
+              <span className="relative z-10 flex items-center justify-center">
+                <UserPlus className="h-4 w-4 mr-1.5" />
+                Sign Up
+              </span>
+            </button>
+          </div>
 
-        <div className="p-8 bg-gray-900">
-          {currentPage === 'login' ? (
-            <form onSubmit={handleLogin}>
-              <div className="space-y-4">
-                <div>
-                  <label className="block text-sm font-medium text-gray-300 mb-2">
-                    Email Address
-                  </label>
-                  <div className="relative">
-                    <Mail className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-blue-400" />
-                    <input
-                      type="email"
+          {/* Form container */}
+          <div className="px-6 pb-8 pt-6">
+            <AnimatePresence mode="wait">
+              {currentPage === 'login' ? (
+                <motion.form
+                  key="login"
+                  initial={{ opacity: 0, x: -20 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  exit={{ opacity: 0, x: 20 }}
+                  transition={{ duration: 0.25 }}
+                  onSubmit={handleLogin}
+                >
+                  <div className="space-y-4">
+                    <InputField
+                      label="Email Address"
                       name="email"
+                      type="email"
                       value={formData.email}
                       onChange={handleInputChange}
-                      className={`w-full pl-10 pr-4 py-3 bg-gray-800 border-2 ${
-                        errors.email ? 'border-red-500 focus:ring-red-500' : 'border-gray-700 focus:ring-blue-500 focus:border-blue-500'
-                      } rounded-lg focus:outline-none focus:ring-2 transition-all text-white placeholder-gray-500`}
+                      error={errors.email}
+                      icon={Mail}
                       placeholder="you@example.com"
+                      focusedField={focusedField}
+                      setFocusedField={setFocusedField}
                     />
-                  </div>
-                  {errors.email && (
-                    <p className="text-red-500 text-sm mt-1 flex items-center">
-                      <AlertCircle className="h-4 w-4 mr-1" />
-                      {errors.email}
-                    </p>
-                  )}
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium text-gray-300 mb-2">
-                    Password
-                  </label>
-                  <div className="relative">
-                    <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-blue-400" />
-                    <input
-                      type={showPassword ? 'text' : 'password'}
+                    <InputField
+                      label="Password"
                       name="password"
+                      type={showPassword ? 'text' : 'password'}
                       value={formData.password}
                       onChange={handleInputChange}
-                      className={`w-full pl-10 pr-12 py-3 bg-gray-800 border-2 ${
-                        errors.password ? 'border-red-500 focus:ring-red-500' : 'border-gray-700 focus:ring-blue-500 focus:border-blue-500'
-                      } rounded-lg focus:outline-none focus:ring-2 transition-all text-white placeholder-gray-500`}
+                      error={errors.password}
+                      icon={Lock}
                       placeholder="Enter your password"
+                      focusedField={focusedField}
+                      setFocusedField={setFocusedField}
+                      rightIcon={showPassword ? EyeOff : Eye}
+                      onRightIconClick={() => setShowPassword(!showPassword)}
                     />
-                    <button
-                      type="button"
-                      onClick={() => setShowPassword(!showPassword)}
-                      className="absolute right-3 top-1/2 transform -translate-y-1/2 text-blue-400 hover:text-blue-300"
-                    >
-                      {showPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
-                    </button>
-                  </div>
-                  {errors.password && (
-                    <p className="text-red-500 text-sm mt-1 flex items-center">
-                      <AlertCircle className="h-4 w-4 mr-1" />
-                      {errors.password}
-                    </p>
-                  )}
-                </div>
 
-                <div className="flex items-center justify-between">
-                  <label className="flex items-center">
-                    <input type="checkbox" className="rounded border-gray-600 text-blue-500 focus:ring-blue-500 bg-gray-800" />
-                    <span className="ml-2 text-sm text-gray-300">Remember me</span>
-                  </label>
-                  <button type="button" className="text-sm text-blue-400 hover:text-blue-300 font-medium">
-                    Forgot password?
-                  </button>
-                </div>
-
-                {errors.submit && (
-                  <div className="text-red-500 text-sm text-center p-3 rounded-lg bg-red-900 bg-opacity-20 border border-red-500 flex items-center justify-center">
-                    <AlertCircle className="h-4 w-4 mr-2" />
-                    {errors.submit}
-                  </div>
-                )}
-
-                <button
-                  type="submit"
-                  disabled={isLoading}
-                  className={`w-full py-3 px-4 rounded-lg font-medium transition-all duration-300 ${
-                    isLoading
-                      ? 'bg-gray-700 cursor-not-allowed text-gray-400'
-                      : 'bg-gradient-to-r from-blue-600 to-cyan-500 hover:from-blue-700 hover:to-cyan-600 text-white shadow-lg hover:shadow-blue-500/50 transform hover:-translate-y-0.5'
-                  }`}
-                  style={{ boxShadow: isLoading ? 'none' : '0 0 20px rgba(59, 130, 246, 0.4)' }}
-                >
-                  {isLoading ? (
-                    <div className="flex items-center justify-center">
-                      <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white mr-2"></div>
-                      Signing in...
+                    <div className="flex items-center justify-between">
+                      <label className="flex items-center cursor-pointer group">
+                        <div className="relative">
+                          <input type="checkbox" className="sr-only peer" />
+                          <div className="w-4 h-4 rounded border border-gray-600 bg-gray-800 peer-checked:bg-blue-500 peer-checked:border-blue-500 transition-all group-hover:border-gray-500"></div>
+                          <CheckCircle2 className="absolute inset-0 h-4 w-4 text-white opacity-0 peer-checked:opacity-100 transition-opacity" />
+                        </div>
+                        <span className="ml-2 text-sm text-gray-400 group-hover:text-gray-300 transition-colors">Remember me</span>
+                      </label>
+                      <button type="button" className="text-sm text-blue-400 hover:text-blue-300 font-medium transition-colors">
+                        Forgot password?
+                      </button>
                     </div>
-                  ) : (
-                    'Sign In'
-                  )}
-                </button>
-              </div>
-            </form>
-          ) : (
-            <form onSubmit={handleSignup}>
-              <div className="space-y-4">
-                <div className="grid grid-cols-2 gap-3">
-                  <div>
-                    <label className="block text-sm font-medium text-gray-300 mb-2">
-                      First Name
-                    </label>
-                    <div className="relative">
-                      <User className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-blue-400" />
-                      <input
-                        type="text"
+
+                    {errors.submit && (
+                      <motion.div
+                        initial={{ opacity: 0, height: 0 }}
+                        animate={{ opacity: 1, height: 'auto' }}
+                        className="text-red-400 text-sm text-center p-3 rounded-xl bg-red-500/10 border border-red-500/20 flex items-center justify-center"
+                      >
+                        <AlertCircle className="h-4 w-4 mr-2 flex-shrink-0" />
+                        {errors.submit}
+                      </motion.div>
+                    )}
+
+                    <motion.button
+                      type="submit"
+                      disabled={isLoading}
+                      whileHover={!isLoading ? { scale: 1.01 } : {}}
+                      whileTap={!isLoading ? { scale: 0.99 } : {}}
+                      className={`w-full py-3 px-4 rounded-xl font-semibold text-sm tracking-wide transition-all duration-300 relative overflow-hidden ${
+                        isLoading
+                          ? 'bg-gray-700 cursor-not-allowed text-gray-400'
+                          : 'bg-gradient-to-r from-blue-600 to-cyan-500 hover:from-blue-500 hover:to-cyan-400 text-white shadow-lg shadow-blue-500/25'
+                      }`}
+                    >
+                      {isLoading ? (
+                        <div className="flex items-center justify-center">
+                          <svg className="animate-spin h-5 w-5 mr-2" viewBox="0 0 24 24">
+                            <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" />
+                            <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+                          </svg>
+                          Signing in...
+                        </div>
+                      ) : (
+                        <span className="flex items-center justify-center">
+                          <LogIn className="h-4 w-4 mr-2" />
+                          Sign In
+                        </span>
+                      )}
+                    </motion.button>
+                  </div>
+                </motion.form>
+              ) : (
+                <motion.form
+                  key="signup"
+                  initial={{ opacity: 0, x: 20 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  exit={{ opacity: 0, x: -20 }}
+                  transition={{ duration: 0.25 }}
+                  onSubmit={handleSignup}
+                >
+                  <div className="space-y-4">
+                    <div className="grid grid-cols-2 gap-3">
+                      <InputField
+                        label="First Name"
                         name="firstName"
+                        type="text"
                         value={formData.firstName}
                         onChange={handleInputChange}
-                        className={`w-full pl-10 pr-4 py-3 bg-gray-800 border-2 ${
-                          errors.firstName ? 'border-red-500 focus:ring-red-500' : 'border-gray-700 focus:ring-blue-500 focus:border-blue-500'
-                        } rounded-lg focus:outline-none focus:ring-2 transition-all text-white placeholder-gray-500`}
-                        placeholder="John"
+                        error={errors.firstName}
+                        icon={User}
+                        placeholder="First name"
+                        focusedField={focusedField}
+                        setFocusedField={setFocusedField}
                       />
-                    </div>
-                    {errors.firstName && (
-                      <p className="text-red-500 text-sm mt-1 flex items-center">
-                        <AlertCircle className="h-4 w-4 mr-1" />
-                        {errors.firstName}
-                      </p>
-                    )}
-                  </div>
-
-                  <div>
-                    <label className="block text-sm font-medium text-gray-300 mb-2">
-                      Last Name
-                    </label>
-                    <div className="relative">
-                      <User className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-blue-400" />
-                      <input
-                        type="text"
+                      <InputField
+                        label="Last Name"
                         name="lastName"
+                        type="text"
                         value={formData.lastName}
                         onChange={handleInputChange}
-                        className={`w-full pl-10 pr-4 py-3 bg-gray-800 border-2 ${
-                          errors.lastName ? 'border-red-500 focus:ring-red-500' : 'border-gray-700 focus:ring-blue-500 focus:border-blue-500'
-                        } rounded-lg focus:outline-none focus:ring-2 transition-all text-white placeholder-gray-500`}
-                        placeholder="Doe"
+                        error={errors.lastName}
+                        icon={User}
+                        placeholder="Last name"
+                        focusedField={focusedField}
+                        setFocusedField={setFocusedField}
                       />
                     </div>
-                    {errors.lastName && (
-                      <p className="text-red-500 text-sm mt-1 flex items-center">
-                        <AlertCircle className="h-4 w-4 mr-1" />
-                        {errors.lastName}
-                      </p>
-                    )}
-                  </div>
-                </div>
 
-                <div>
-                  <label className="block text-sm font-medium text-gray-300 mb-2">
-                    Email Address
-                  </label>
-                  <div className="relative">
-                    <Mail className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-blue-400" />
-                    <input
-                      type="email"
+                    <InputField
+                      label="Email Address"
                       name="email"
+                      type="email"
                       value={formData.email}
                       onChange={handleInputChange}
-                      className={`w-full pl-10 pr-4 py-3 bg-gray-800 border-2 ${
-                        errors.email ? 'border-red-500 focus:ring-red-500' : 'border-gray-700 focus:ring-blue-500 focus:border-blue-500'
-                      } rounded-lg focus:outline-none focus:ring-2 transition-all text-white placeholder-gray-500`}
+                      error={errors.email}
+                      icon={Mail}
                       placeholder="you@example.com"
+                      focusedField={focusedField}
+                      setFocusedField={setFocusedField}
                     />
-                  </div>
-                  {errors.email && (
-                    <p className="text-red-500 text-sm mt-1 flex items-center">
-                      <AlertCircle className="h-4 w-4 mr-1" />
-                      {errors.email}
-                    </p>
-                  )}
-                </div>
 
-                <div>
-                  <label className="block text-sm font-medium text-gray-300 mb-2">
-                    Password
-                  </label>
-                  <div className="relative">
-                    <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-blue-400" />
-                    <input
-                      type={showPassword ? 'text' : 'password'}
+                    <InputField
+                      label="Password"
                       name="password"
+                      type={showPassword ? 'text' : 'password'}
                       value={formData.password}
                       onChange={handleInputChange}
-                      className={`w-full pl-10 pr-12 py-3 bg-gray-800 border-2 ${
-                        errors.password ? 'border-red-500 focus:ring-red-500' : 'border-gray-700 focus:ring-blue-500 focus:border-blue-500'
-                      } rounded-lg focus:outline-none focus:ring-2 transition-all text-white placeholder-gray-500`}
+                      error={errors.password}
+                      icon={Lock}
                       placeholder="Create a strong password"
-                    />
-                    <button
-                      type="button"
-                      onClick={() => setShowPassword(!showPassword)}
-                      className="absolute right-3 top-1/2 transform -translate-y-1/2 text-blue-400 hover:text-blue-300"
+                      focusedField={focusedField}
+                      setFocusedField={setFocusedField}
+                      rightIcon={showPassword ? EyeOff : Eye}
+                      onRightIconClick={() => setShowPassword(!showPassword)}
                     >
-                      {showPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
-                    </button>
-                  </div>
+                      {formData.password && (
+                        <div className="mt-2 space-y-1.5">
+                          <div className="flex items-center justify-between text-xs">
+                            <span className="text-gray-500">Password strength</span>
+                            <span className={`font-medium ${
+                              passwordStrength <= 2 ? 'text-red-400' :
+                              passwordStrength === 3 ? 'text-yellow-400' :
+                              passwordStrength === 4 ? 'text-emerald-400' : 'text-emerald-400'
+                            }`}>
+                              {getPasswordStrengthText()}
+                            </span>
+                          </div>
+                          <div className="w-full h-1.5 bg-gray-700/50 rounded-full overflow-hidden">
+                            <motion.div
+                              initial={{ width: 0 }}
+                              animate={{ width: `${(passwordStrength / 5) * 100}%` }}
+                              className={`h-full rounded-full bg-gradient-to-r ${getPasswordStrengthColor()}`}
+                              transition={{ duration: 0.4 }}
+                            />
+                          </div>
+                          <div className="flex gap-1.5">
+                            {['Lowercase', 'Uppercase', 'Number', 'Symbol', '8+ chars'].map((label, i) => (
+                              <span key={label} className={`text-[10px] px-1.5 py-0.5 rounded-full ${
+                                (() => {
+                                  const checks = [
+                                    /[a-z]/.test(formData.password),
+                                    /[A-Z]/.test(formData.password),
+                                    /\d/.test(formData.password),
+                                    /[^a-zA-Z0-9]/.test(formData.password),
+                                    formData.password.length >= 8
+                                  ];
+                                  return checks[i]
+                                    ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20'
+                                    : 'bg-gray-800 text-gray-600 border border-gray-700';
+                                })()
+                              }`}>{label}</span>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+                    </InputField>
 
-                  {formData.password && (
-                    <div className="mt-2">
-                      <div className="flex items-center justify-between text-sm">
-                        <span className="text-gray-400">Password strength:</span>
-                        <span className={`font-medium ${
-                          passwordStrength <= 2 ? 'text-red-400' :
-                          passwordStrength === 3 ? 'text-yellow-400' :
-                          passwordStrength === 4 ? 'text-cyan-400' : 'text-blue-400'
-                        }`}>
-                          {getPasswordStrengthText()}
-                        </span>
-                      </div>
-                      <div className="w-full bg-gray-700 rounded-full h-2 mt-1 overflow-hidden">
-                        <div
-                          className={`h-2 bg-gradient-to-r ${getPasswordStrengthColor()} transition-all duration-500`}
-                          style={{ width: `${(passwordStrength / 5) * 100}%` }}
-                        ></div>
-                      </div>
-                    </div>
-                  )}
-
-                  {errors.password && (
-                    <p className="text-red-500 text-sm mt-1 flex items-center">
-                      <AlertCircle className="h-4 w-4 mr-1" />
-                      {errors.password}
-                    </p>
-                  )}
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium text-gray-300 mb-2">
-                    Confirm Password
-                  </label>
-                  <div className="relative">
-                    <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-blue-400" />
-                    <input
-                      type={showConfirmPassword ? 'text' : 'password'}
+                    <InputField
+                      label="Confirm Password"
                       name="confirmPassword"
+                      type={showConfirmPassword ? 'text' : 'password'}
                       value={formData.confirmPassword}
                       onChange={handleInputChange}
-                      className={`w-full pl-10 pr-12 py-3 bg-gray-800 border-2 ${
-                        errors.confirmPassword ? 'border-red-500 focus:ring-red-500' : 'border-gray-700 focus:ring-blue-500 focus:border-blue-500'
-                      } rounded-lg focus:outline-none focus:ring-2 transition-all text-white placeholder-gray-500`}
+                      error={errors.confirmPassword}
+                      icon={Lock}
                       placeholder="Confirm your password"
-                    />
-                    <button
-                      type="button"
-                      onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-                      className="absolute right-3 top-1/2 transform -translate-y-1/2 text-blue-400 hover:text-blue-300"
+                      focusedField={focusedField}
+                      setFocusedField={setFocusedField}
+                      rightIcon={showConfirmPassword ? EyeOff : Eye}
+                      onRightIconClick={() => setShowConfirmPassword(!showConfirmPassword)}
                     >
-                      {showConfirmPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
-                    </button>
+                      {formData.confirmPassword && formData.password === formData.confirmPassword && (
+                        <motion.p
+                          initial={{ opacity: 0, y: -5 }}
+                          animate={{ opacity: 1, y: 0 }}
+                          className="text-emerald-400 text-xs mt-1.5 flex items-center"
+                        >
+                          <CheckCircle2 className="h-3.5 w-3.5 mr-1" />
+                          Passwords match
+                        </motion.p>
+                      )}
+                    </InputField>
+
+                    {errors.submit && (
+                      <motion.div
+                        initial={{ opacity: 0, height: 0 }}
+                        animate={{ opacity: 1, height: 'auto' }}
+                        className="text-red-400 text-sm text-center p-3 rounded-xl bg-red-500/10 border border-red-500/20 flex items-center justify-center"
+                      >
+                        <AlertCircle className="h-4 w-4 mr-2 flex-shrink-0" />
+                        {errors.submit}
+                      </motion.div>
+                    )}
+
+                    <motion.button
+                      type="submit"
+                      disabled={isLoading}
+                      whileHover={!isLoading ? { scale: 1.01 } : {}}
+                      whileTap={!isLoading ? { scale: 0.99 } : {}}
+                      className={`w-full py-3 px-4 rounded-xl font-semibold text-sm tracking-wide transition-all duration-300 relative overflow-hidden ${
+                        isLoading
+                          ? 'bg-gray-700 cursor-not-allowed text-gray-400'
+                          : 'bg-gradient-to-r from-blue-600 to-cyan-500 hover:from-blue-500 hover:to-cyan-400 text-white shadow-lg shadow-blue-500/25'
+                      }`}
+                    >
+                      {isLoading ? (
+                        <div className="flex items-center justify-center">
+                          <svg className="animate-spin h-5 w-5 mr-2" viewBox="0 0 24 24">
+                            <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" />
+                            <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+                          </svg>
+                          Creating account...
+                        </div>
+                      ) : (
+                        <span className="flex items-center justify-center">
+                          <Sparkles className="h-4 w-4 mr-2" />
+                          Create Account
+                        </span>
+                      )}
+                    </motion.button>
                   </div>
-                  {formData.confirmPassword && formData.password === formData.confirmPassword && (
-                    <p className="text-blue-400 text-sm mt-1 flex items-center">
-                      <CheckCircle2 className="h-4 w-4 mr-1" />
-                      Passwords match
-                    </p>
-                  )}
-                  {errors.confirmPassword && (
-                    <p className="text-red-500 text-sm mt-1 flex items-center">
-                      <AlertCircle className="h-4 w-4 mr-1" />
-                      {errors.confirmPassword}
-                    </p>
-                  )}
+                </motion.form>
+              )}
+            </AnimatePresence>
+
+            {/* Divider */}
+            <div className="my-6 flex items-center gap-3">
+              <div className="flex-1 h-px bg-gradient-to-r from-transparent via-gray-600 to-transparent"></div>
+              <span className="text-xs text-gray-500 font-medium tracking-wider uppercase">or continue with</span>
+              <div className="flex-1 h-px bg-gradient-to-r from-transparent via-gray-600 to-transparent"></div>
+            </div>
+
+            {/* Google Button */}
+            <motion.div
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.5 }}
+              className="flex justify-center"
+            >
+              {process.env.REACT_APP_GOOGLE_CLIENT_ID ? (
+                <div className="scale-110 origin-center">
+                  <GoogleLogin
+                    onSuccess={handleGoogleSuccess}
+                    onError={handleGoogleError}
+                    size="large"
+                    shape="pill"
+                    text="continue_with"
+                    theme="filled_black"
+                  />
                 </div>
-
-                {errors.submit && (
-                  <div className="text-red-500 text-sm text-center p-3 rounded-lg bg-red-900 bg-opacity-20 border border-red-500 flex items-center justify-center">
-                    <AlertCircle className="h-4 w-4 mr-2" />
-                    {errors.submit}
-                  </div>
-                )}
-
-                <button
-                  type="submit"
-                  disabled={isLoading}
-                  className={`w-full py-3 px-4 rounded-lg font-medium transition-all duration-300 ${
-                    isLoading
-                      ? 'bg-gray-700 cursor-not-allowed text-gray-400'
-                      : 'bg-gradient-to-r from-blue-600 to-cyan-500 hover:from-blue-700 hover:to-cyan-600 text-white shadow-lg hover:shadow-blue-500/50 transform hover:-translate-y-0.5'
-                  }`}
-                  style={{ boxShadow: isLoading ? 'none' : '0 0 20px rgba(59, 130, 246, 0.4)' }}
-                >
-                  {isLoading ? (
-                    <div className="flex items-center justify-center">
-                      <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white mr-2"></div>
-                      Creating account...
-                    </div>
-                  ) : (
-                    'Create Account'
-                  )}
-                </button>
-              </div>
-            </form>
-          )}
-
-          <div className="my-6 flex items-center">
-            <div className="flex-1 border-t border-gray-700"></div>
-            <span className="px-4 text-sm text-gray-500">or continue with</span>
-            <div className="flex-1 border-t border-gray-700"></div>
+              ) : (
+                <div className="text-center px-4 py-3 rounded-xl bg-gray-800/50 border border-gray-700/50">
+                  <p className="text-gray-500 text-xs">
+                    Google sign-in requires a Client ID. Set{' '}
+                    <code className="text-blue-400 bg-blue-500/10 px-1 py-0.5 rounded">REACT_APP_GOOGLE_CLIENT_ID</code>
+                    {' '}in your frontend .env
+                  </p>
+                </div>
+              )}
+            </motion.div>
           </div>
+        </div>
 
-          <button
-            type="button"
-            onClick={handleGoogleAuth}
-            className="w-full bg-gray-800 border-2 border-gray-700 text-gray-300 py-3 px-4 rounded-lg hover:bg-gray-700 hover:border-blue-500 transition-all duration-300 flex items-center justify-center font-medium shadow-sm"
-          >
-            <svg className="h-5 w-5 mr-3" viewBox="0 0 24 24">
-              <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
-              <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
-              <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/>
-              <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/>
-            </svg>
-            Continue with Google
-          </button>
+        {/* Footer */}
+        <p className="text-center mt-6 text-gray-600 text-xs">
+          © 2026 Cohabit. All rights reserved.
+        </p>
+      </motion.div>
+    </div>
+  );
+};
+
+// ─── Reusable Input Field Component ───
+const InputField = ({ label, name, type, value, onChange, error, icon: Icon, placeholder, focusedField, setFocusedField, children, rightIcon: RightIcon, onRightIconClick }) => {
+  const isFocused = focusedField === name;
+  const hasValue = value.length > 0;
+
+  return (
+    <div>
+      <label className="block text-xs font-medium text-gray-400 mb-1.5 tracking-wide uppercase">
+        {label}
+      </label>
+      <div className={`relative group transition-all duration-200 ${
+        isFocused ? 'scale-[1.01]' : ''
+      }`}>
+        <div className={`absolute inset-0 rounded-xl bg-gradient-to-r from-blue-500/20 to-cyan-500/20 opacity-0 transition-opacity duration-300 ${
+          isFocused ? 'opacity-100' : ''
+        }`}></div>
+        <div className={`relative flex items-center border-2 rounded-xl transition-all duration-200 ${
+          error
+            ? 'border-red-500/60 bg-red-500/5'
+            : isFocused
+              ? 'border-blue-500/60 bg-gray-800/90'
+              : hasValue
+                ? 'border-gray-600/50 bg-gray-800/50'
+                : 'border-gray-700/50 bg-gray-800/30 hover:border-gray-600/50'
+        }`}>
+          <Icon className={`absolute left-3 h-4 w-4 transition-colors duration-200 ${
+            error ? 'text-red-400' : isFocused ? 'text-blue-400' : 'text-gray-500 group-hover:text-gray-400'
+          }`} />
+          <input
+            type={type}
+            name={name}
+            value={value}
+            onChange={onChange}
+            onFocus={() => setFocusedField(name)}
+            onBlur={() => setFocusedField(null)}
+            className="w-full pl-10 pr-10 py-3 bg-transparent rounded-xl focus:outline-none text-white text-sm placeholder-gray-600"
+            placeholder={placeholder}
+            autoComplete={name === 'password' || name === 'confirmPassword' ? 'new-password' : 'off'}
+          />
+          {RightIcon && (
+            <button
+              type="button"
+              onClick={onRightIconClick}
+              className="absolute right-2 p-1.5 rounded-lg text-gray-500 hover:text-blue-400 hover:bg-gray-700/50 transition-all"
+              tabIndex={-1}
+            >
+              <RightIcon className="h-4 w-4" />
+            </button>
+          )}
         </div>
       </div>
-
-      <style jsx>{`
-        @keyframes blob {
-          0%, 100% {
-            transform: translate(0, 0) scale(1);
-          }
-          33% {
-            transform: translate(30px, -50px) scale(1.1);
-          }
-          66% {
-            transform: translate(-20px, 20px) scale(0.9);
-          }
-        }
-        .animate-blob {
-          animation: blob 7s infinite;
-        }
-        .animation-delay-2000 {
-          animation-delay: 2s;
-        }
-        .animation-delay-4000 {
-          animation-delay: 4s;
-        }
-      `}</style>
+      {error && (
+        <motion.p
+          initial={{ opacity: 0, y: -4 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="text-red-400 text-xs mt-1.5 flex items-center"
+        >
+          <AlertCircle className="h-3 w-3 mr-1" />
+          {error}
+        </motion.p>
+      )}
+      {children}
     </div>
   );
 };
