@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { GoogleLogin } from '@react-oauth/google';
-import { Home, Eye, EyeOff, Mail, User, Lock, AlertCircle, CheckCircle2, LogIn, UserPlus, Sparkles } from 'lucide-react';
+import { Home, Eye, EyeOff, Mail, User, Lock, AlertCircle, CheckCircle2, LogIn, UserPlus } from 'lucide-react';
 import { authAPI } from '../services/api';
 
 const AuthPages = ({ setIsAuthenticated, initialPage = 'login' }) => {
