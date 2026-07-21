@@ -1,22 +1,35 @@
+@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800&display=swap');
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
-@keyframes blob {
-  0%, 100% { transform: translate(0, 0) scale(1); }
-  33% { transform: translate(30px, -50px) scale(1.1); }
-  66% { transform: translate(-20px, 20px) scale(0.9); }
+@layer base {
+  body {
+    @apply bg-[#F7F7F7] text-[#222222] font-sans antialiased;
+  }
+
+  input, select, textarea, button {
+    font-family: inherit;
+  }
 }
 
-.animate-blob {
-  animation: blob 7s infinite;
+@layer components {
+  .btn-primary {
+    @apply bg-coral-500 hover:bg-coral-600 text-white font-semibold px-6 py-3 rounded-pill transition-all duration-200 active:scale-[0.97] shadow-air-sm hover:shadow-air;
+  }
+
+  .btn-secondary {
+    @apply bg-white hover:bg-gray-50 text-[#222222] font-semibold px-6 py-3 rounded-pill transition-all duration-200 border border-[#DDDDDD] shadow-air-sm hover:shadow-air;
+  }
+
+  .card-air {
+    @apply bg-white rounded-air shadow-air;
+  }
+
+  .badge-air {
+    @apply w-10 h-10 rounded-full bg-coral-50 flex items-center justify-center text-coral-500;
+  }
 }
 
-.animation-delay-2000 {
-  animation-delay: 2s;
-}
-
-.animation-delay-4000 {
-  animation-delay: 4s;
-}
 

@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
-import { GoogleOAuthProvider } from '@react-oauth/google';
 import AuthPages from './components/AuthPages';
 import Dashboard from './components/Dashboard';
 import LandingPage from './components/LandingPage';
@@ -32,8 +31,6 @@ function App() {
     setIsAuthenticated(false);
   };
 
-  const googleClientId = process.env.REACT_APP_GOOGLE_CLIENT_ID;
-
   const appContent = (
     <div className="App">
       <ToastContainer
@@ -46,7 +43,7 @@ function App() {
         pauseOnFocusLoss
         draggable
         pauseOnHover
-        theme="dark"
+        theme="light"
       />
       {!isAuthenticated && !showAuth ? (
         <LandingPage setIsAuthenticated={handleAuth} setShowAuth={setShowAuth} />
@@ -60,11 +57,7 @@ function App() {
 
   return (
     <ErrorBoundary>
-      {googleClientId ? (
-        <GoogleOAuthProvider clientId={googleClientId}>
-          {appContent}
-        </GoogleOAuthProvider>
-      ) : appContent}
+      {appContent}
     </ErrorBoundary>
   );
 }

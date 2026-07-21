@@ -1,14 +1,8 @@
 import React from 'react';
 
-const COLORS = [
-  'from-blue-600 to-blue-400',
-  'from-purple-600 to-purple-400',
-  'from-green-600 to-green-400',
-  'from-rose-600 to-rose-400',
-  'from-amber-600 to-amber-400',
-  'from-cyan-600 to-cyan-400',
-  'from-pink-600 to-pink-400',
-  'from-teal-600 to-teal-400',
+const BG_COLORS = [
+  '#FF385C', '#E81C4A', '#C4103C', '#FF6B7C', '#FF9EA8',
+  '#222222', '#717171', '#555555',
 ];
 
 function hashCode(str) {
@@ -27,8 +21,7 @@ const Avatar = ({ name, size = 'md', className = '' }) => {
     .toUpperCase()
     .slice(0, 2);
 
-  const colorIndex = hashCode(name || '') % COLORS.length;
-  const gradient = COLORS[colorIndex];
+  const bgColor = BG_COLORS[hashCode(name || '') % BG_COLORS.length];
 
   const sizes = {
     sm: 'w-8 h-8 text-xs',
@@ -39,7 +32,8 @@ const Avatar = ({ name, size = 'md', className = '' }) => {
 
   return (
     <div
-      className={`${sizes[size]} bg-gradient-to-br ${gradient} rounded-full flex items-center justify-center text-white font-bold ${className}`}
+      className={`${sizes[size]} rounded-full flex items-center justify-center text-white font-bold ${className}`}
+      style={{ backgroundColor: bgColor }}
       title={name}
     >
       {initials}

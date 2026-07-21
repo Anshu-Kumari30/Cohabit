@@ -310,49 +310,44 @@ const Dashboard = ({ setIsAuthenticated }) => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-900 via-blue-950 to-black relative overflow-hidden">
-      {/* Background */}
-      <div className="absolute inset-0 overflow-hidden pointer-events-none">
-        <div className="absolute top-20 left-10 w-64 h-64 bg-blue-500 rounded-full mix-blend-screen filter blur-3xl opacity-30 animate-blob"></div>
-        <div className="absolute top-40 right-20 w-72 h-72 bg-cyan-400 rounded-full mix-blend-screen filter blur-3xl opacity-20 animate-blob animation-delay-2000"></div>
-        <div className="absolute bottom-20 left-40 w-64 h-64 bg-blue-600 rounded-full mix-blend-screen filter blur-3xl opacity-25 animate-blob animation-delay-4000"></div>
-      </div>
-
+    <div className="min-h-screen bg-[#F7F7F7]">
       {/* Navigation */}
-      <nav className="bg-gray-900 border-b border-blue-500 relative z-10" style={{ boxShadow: '0 0 20px rgba(59, 130, 246, 0.3)' }}>
+      <nav className="bg-white border-b border-[#DDDDDD] relative z-10">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center h-16">
             <div className="flex items-center">
-              <Home className="h-8 w-8 text-blue-400 mr-3" />
-              <h1 className="text-xl font-bold text-white">Cohabit</h1>
+              <div className="badge-air mr-3">
+                <Home className="h-5 w-5" />
+              </div>
+              <h1 className="text-xl font-bold text-[#222222]">Cohabit</h1>
             </div>
             <div className="flex items-center space-x-4">
               {/* Notifications */}
               <div className="relative">
-                <button onClick={() => setShowNotifPanel(!showNotifPanel)} className="text-gray-300 hover:text-blue-400 transition-colors relative">
+                <button onClick={() => setShowNotifPanel(!showNotifPanel)} className="text-[#717171] hover:text-[#222222] transition-colors relative">
                   <Bell className="h-5 w-5" />
                   {unreadCount > 0 && (
-                    <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full w-4 h-4 flex items-center justify-center">
+                    <span className="absolute -top-1 -right-1 bg-coral-500 text-white text-xs rounded-full w-4 h-4 flex items-center justify-center">
                       {unreadCount}
                     </span>
                   )}
                 </button>
                 {showNotifPanel && (
-                  <div className="absolute right-0 mt-2 w-80 bg-gray-900 border border-gray-700 rounded-xl shadow-2xl z-50 max-h-96 overflow-y-auto">
-                    <div className="flex justify-between items-center p-3 border-b border-gray-700">
-                      <span className="text-white font-medium text-sm">Notifications</span>
+                  <div className="absolute right-0 mt-2 w-80 bg-white rounded-air shadow-air-lg z-50 max-h-96 overflow-y-auto border border-[#DDDDDD]">
+                    <div className="flex justify-between items-center p-3 border-b border-[#DDDDDD]">
+                      <span className="text-[#222222] font-semibold text-sm">Notifications</span>
                       {unreadCount > 0 && (
-                        <button onClick={markAllRead} className="text-xs text-blue-400 hover:text-blue-300">Mark all read</button>
+                        <button onClick={markAllRead} className="text-xs text-coral-500 hover:text-coral-600 font-medium">Mark all read</button>
                       )}
                     </div>
                     {notifications.length === 0 ? (
-                      <p className="text-gray-500 text-sm text-center py-8">No notifications</p>
+                      <p className="text-[#717171] text-sm text-center py-8">No notifications</p>
                     ) : (
                       notifications.slice(0, 10).map(n => (
-                        <div key={n.id} className={`p-3 border-b border-gray-800 cursor-pointer hover:bg-gray-800 transition-colors ${!n.isRead ? 'bg-gray-800 bg-opacity-50' : ''}`}
+                        <div key={n.id} className={`p-3 border-b border-[#DDDDDD] cursor-pointer hover:bg-[#F7F7F7] transition-colors ${!n.isRead ? 'bg-coral-50' : ''}`}
                           onClick={() => markNotifRead(n.id)}>
-                          <p className="text-sm text-gray-300">{n.message}</p>
-                          <p className="text-xs text-gray-500 mt-1">{new Date(n.createdAt).toLocaleDateString()}</p>
+                          <p className="text-sm text-[#222222]">{n.message}</p>
+                          <p className="text-xs text-[#717171] mt-1">{new Date(n.createdAt).toLocaleDateString()}</p>
                         </div>
                       ))
                     )}
@@ -360,10 +355,10 @@ const Dashboard = ({ setIsAuthenticated }) => {
                 )}
               </div>
               {/* Profile */}
-              <button onClick={() => setActiveTab('profile')} className="text-gray-300 hover:text-blue-400 transition-colors">
+              <button onClick={() => setActiveTab('profile')} className="transition-colors">
                 <Avatar name={`${currentUser?.firstName || ''} ${currentUser?.lastName || ''}`} size="sm" />
               </button>
-              <button onClick={handleLogout} className="text-gray-300 hover:text-red-400 transition-colors">
+              <button onClick={handleLogout} className="text-[#717171] hover:text-coral-500 transition-colors">
                 <LogOut className="h-5 w-5" />
               </button>
             </div>
@@ -371,9 +366,9 @@ const Dashboard = ({ setIsAuthenticated }) => {
         </div>
       </nav>
 
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 relative z-10 pb-20 md:pb-8">
-        {/* Desktop Tab Navigation - hidden on mobile (BottomNav shows) */}
-        <div className="hidden md:flex space-x-2 mb-8 bg-gray-900 p-2 rounded-lg border border-gray-800">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 relative pb-20 md:pb-8">
+        {/* Desktop Tab Navigation */}
+        <div className="hidden md:flex space-x-2 mb-8 bg-white p-1.5 rounded-pill shadow-air-sm border border-[#DDDDDD]">
           {[
             { id: 'overview', icon: TrendingUp, label: 'Overview' },
             { id: 'expenses', icon: DollarSign, label: 'Expenses' },
@@ -383,10 +378,10 @@ const Dashboard = ({ setIsAuthenticated }) => {
             { id: 'analytics', icon: TrendingUp, label: 'Analytics' },
           ].map(tab => (
             <button key={tab.id} onClick={() => setActiveTab(tab.id)}
-              className={`flex-1 py-3 px-4 rounded-lg font-medium transition-all duration-200 hover:scale-[1.02] active:scale-95 ${
+              className={`flex-1 py-2.5 px-4 rounded-pill font-semibold text-sm transition-all duration-200 ${
                 activeTab === tab.id
-                  ? 'bg-gradient-to-r from-blue-600 to-cyan-500 text-white shadow-lg'
-                  : 'text-gray-400 hover:text-blue-400 hover:bg-gray-800'
+                  ? 'bg-coral-500 text-white shadow-air-sm'
+                  : 'text-[#717171] hover:text-[#222222] hover:bg-[#F7F7F7]'
               }`}>
               <tab.icon className="h-4 w-4 inline mr-2" />
               {tab.label}
@@ -411,44 +406,50 @@ const Dashboard = ({ setIsAuthenticated }) => {
           <div className="space-y-6">
             {/* Stats Cards */}
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-              <div className="bg-gray-900 border border-blue-500 rounded-xl p-6" style={{ boxShadow: '0 0 20px rgba(59, 130, 246, 0.2)' }}>
+              <div className="card-air p-6">
                 <div className="flex items-center justify-between">
                   <div>
-                    <p className="text-gray-400 text-sm">Total Expenses</p>
-                    <p className="text-3xl font-bold text-white mt-2">${totalExpenses.toFixed(2)}</p>
+                    <p className="text-[#717171] text-sm font-medium">Total Expenses</p>
+                    <p className="text-3xl font-bold text-[#222222] mt-2">${totalExpenses.toFixed(2)}</p>
                   </div>
-                  <DollarSign className="h-12 w-12 text-blue-400" />
+                  <div className="badge-air">
+                    <DollarSign className="h-5 w-5" />
+                  </div>
                 </div>
               </div>
-              <div className="bg-gray-900 border border-cyan-500 rounded-xl p-6" style={{ boxShadow: '0 0 20px rgba(34, 211, 238, 0.2)' }}>
+              <div className="card-air p-6">
                 <div className="flex items-center justify-between">
                   <div>
-                    <p className="text-gray-400 text-sm">Completed Chores</p>
-                    <p className="text-3xl font-bold text-white mt-2">{completedChores}/{chores.length}</p>
+                    <p className="text-[#717171] text-sm font-medium">Completed Chores</p>
+                    <p className="text-3xl font-bold text-[#222222] mt-2">{completedChores}/{chores.length}</p>
                   </div>
-                  <CheckSquare className="h-12 w-12 text-cyan-400" />
+                  <div className="badge-air">
+                    <CheckSquare className="h-5 w-5" />
+                  </div>
                 </div>
               </div>
-              <div className="bg-gray-900 border border-blue-400 rounded-xl p-6" style={{ boxShadow: '0 0 20px rgba(96, 165, 250, 0.2)' }}>
+              <div className="card-air p-6">
                 <div className="flex items-center justify-between">
                   <div>
-                    <p className="text-gray-400 text-sm">Active Roommates</p>
-                    <p className="text-3xl font-bold text-white mt-2">{roommates.length}</p>
+                    <p className="text-[#717171] text-sm font-medium">Active Roommates</p>
+                    <p className="text-3xl font-bold text-[#222222] mt-2">{roommates.length}</p>
                   </div>
-                  <Users className="h-12 w-12 text-blue-400" />
+                  <div className="badge-air">
+                    <Users className="h-5 w-5" />
+                  </div>
                 </div>
               </div>
             </div>
 
             {/* Balances */}
-            <div className="bg-gray-900 border border-blue-500 rounded-xl p-6" style={{ boxShadow: '0 0 20px rgba(59, 130, 246, 0.2)' }}>
+            <div className="card-air p-6">
               <div className="flex justify-between items-center mb-4">
-                <h2 className="text-xl font-bold text-white flex items-center">
-                  <TrendingUp className="h-6 w-6 mr-2 text-blue-400" />
+                <h2 className="text-xl font-bold text-[#222222] flex items-center">
+                  <TrendingUp className="h-5 w-5 mr-2 text-coral-500" />
                   Current Balances
                 </h2>
                 <button onClick={() => setShowSettleModal(true)}
-                  className="bg-gradient-to-r from-green-600 to-emerald-500 hover:from-green-700 hover:to-emerald-600 text-white px-4 py-2 rounded-lg text-sm font-medium transition-all flex items-center">
+                  className="bg-coral-500 hover:bg-coral-600 text-white px-4 py-2 rounded-pill text-sm font-semibold transition-all shadow-air-sm hover:shadow-air flex items-center">
                   <Send className="h-4 w-4 mr-1" /> Settle Up
                 </button>
               </div>
@@ -457,18 +458,18 @@ const Dashboard = ({ setIsAuthenticated }) => {
                   <EmptyState title="No balances yet" description="Add expenses to see who owes what" />
                 ) : (
                   balances.map((b, idx) => (
-                    <div key={idx} className="flex items-center justify-between bg-gray-800 p-4 rounded-lg border border-gray-700 transition-all duration-200 hover:border-blue-500">
+                    <div key={idx} className="flex items-center justify-between bg-[#F7F7F7] p-4 rounded-xl transition-all duration-200 hover:shadow-air-sm">
                       <div className="flex items-center space-x-3">
                         <Avatar name={b.name} size="sm" />
-                        <span className="text-gray-300">{b.name}</span>
+                        <span className="text-[#222222] font-medium">{b.name}</span>
                       </div>
                       <div className="flex items-center space-x-3">
-                        <span className={`font-bold ${Number(b.balance) > 0 ? 'text-green-400' : Number(b.balance) < 0 ? 'text-red-400' : 'text-gray-400'}`}>
+                        <span className={`font-bold ${Number(b.balance) > 0 ? 'text-emerald-600' : Number(b.balance) < 0 ? 'text-coral-500' : 'text-[#717171]'}`}>
                           {Number(b.balance) > 0 ? '+' : ''}₹{Number(b.balance).toFixed(2)}
                         </span>
                         {Number(b.balance) < 0 && (
                           <button onClick={() => { setNewSettlement({ from: b.userId, to: '', amount: Math.abs(b.balance).toFixed(2), note: '' }); setShowSettleModal(true); }}
-                            className="text-xs text-blue-400 hover:text-blue-300 font-medium">Pay</button>
+                            className="text-xs text-coral-500 hover:text-coral-600 font-semibold">Pay</button>
                         )}
                       </div>
                     </div>
@@ -479,23 +480,23 @@ const Dashboard = ({ setIsAuthenticated }) => {
 
             {/* Recent Activity */}
             <div className="grid md:grid-cols-2 gap-6">
-              <div className="bg-gray-900 border border-blue-500 rounded-xl p-6" style={{ boxShadow: '0 0 20px rgba(59, 130, 246, 0.2)' }}>
-                <h3 className="text-lg font-bold text-white mb-4">Recent Expenses</h3>
+              <div className="card-air p-6">
+                <h3 className="text-lg font-bold text-[#222222] mb-4">Recent Expenses</h3>
                 {expenses.length === 0 ? (
                   <EmptyState title="No expenses yet" description="Add your first expense to get started" actionLabel="Add Expense" onAction={() => setShowAddExpenseModal(true)} />
                 ) : (
                   <div className="space-y-3">
                     {expenses.slice(0, 5).map(expense => (
-                      <div key={expense.id} className="bg-gray-800 p-3 rounded-lg border border-gray-700 transition-all duration-200 hover:border-blue-500">
+                      <div key={expense.id} className="bg-[#F7F7F7] p-3 rounded-xl transition-all duration-200 hover:shadow-air-sm">
                         <div className="flex justify-between items-start">
                           <div className="flex items-center space-x-3">
                             <Avatar name={expense.paidByName} size="sm" />
                             <div>
-                              <p className="text-white font-medium">{expense.description}</p>
-                              <p className="text-gray-400 text-sm">{expense.paidByName}</p>
+                              <p className="text-[#222222] font-medium">{expense.description}</p>
+                              <p className="text-[#717171] text-sm">{expense.paidByName}</p>
                             </div>
                           </div>
-                          <span className="text-blue-400 font-bold">₹{Number(expense.amount).toFixed(2)}</span>
+                          <span className="text-coral-500 font-bold">₹{Number(expense.amount).toFixed(2)}</span>
                         </div>
                       </div>
                     ))}
@@ -503,26 +504,26 @@ const Dashboard = ({ setIsAuthenticated }) => {
                 )}
               </div>
 
-              <div className="bg-gray-900 border border-cyan-500 rounded-xl p-6" style={{ boxShadow: '0 0 20px rgba(34, 211, 238, 0.2)' }}>
-                <h3 className="text-lg font-bold text-white mb-4">Upcoming Chores</h3>
+              <div className="card-air p-6">
+                <h3 className="text-lg font-bold text-[#222222] mb-4">Upcoming Chores</h3>
                 {chores.filter(c => !c.completed).length === 0 ? (
                   <EmptyState title="All chores done!" description="No pending chores. Great work!" />
                 ) : (
                   <div className="space-y-3">
                     {chores.filter(c => !c.completed).slice(0, 5).map(chore => (
-                      <div key={chore.id} className="bg-gray-800 p-3 rounded-lg border border-gray-700 transition-all duration-200 hover:border-cyan-500">
+                      <div key={chore.id} className="bg-[#F7F7F7] p-3 rounded-xl transition-all duration-200 hover:shadow-air-sm">
                         <div className="flex justify-between items-start">
                           <div className="flex items-center space-x-3">
                             <Avatar name={chore.assignedToName} size="sm" />
                             <div>
-                              <p className="text-white font-medium">{chore.title}</p>
-                              <p className="text-gray-400 text-sm">{chore.assignedToName}</p>
+                              <p className="text-[#222222] font-medium">{chore.title}</p>
+                              <p className="text-[#717171] text-sm">{chore.assignedToName}</p>
                             </div>
                           </div>
-                          <span className={`text-xs px-2 py-1 rounded ${
-                            chore.priority === 'high' ? 'bg-red-900 text-red-300' :
-                            chore.priority === 'medium' ? 'bg-yellow-900 text-yellow-300' :
-                            'bg-green-900 text-green-300'
+                          <span className={`text-xs px-3 py-1 rounded-pill font-medium ${
+                            chore.priority === 'high' ? 'bg-red-50 text-red-600' :
+                            chore.priority === 'medium' ? 'bg-yellow-50 text-yellow-700' :
+                            'bg-emerald-50 text-emerald-700'
                           }`}>
                             {chore.priority}
                           </span>
@@ -540,9 +541,9 @@ const Dashboard = ({ setIsAuthenticated }) => {
         {activeTab === 'expenses' && (
           <div>
             <div className="flex justify-between items-center mb-6">
-              <h2 className="text-2xl font-bold text-white">Expenses</h2>
+              <h2 className="text-2xl font-bold text-[#222222]">Expenses</h2>
               <button onClick={() => setShowAddExpenseModal(true)}
-                className="bg-gradient-to-r from-blue-600 to-cyan-500 hover:from-blue-700 hover:to-cyan-600 text-white px-4 py-2 rounded-lg font-medium transition-all flex items-center shadow-lg">
+                className="bg-coral-500 hover:bg-coral-600 text-white px-4 py-2.5 rounded-pill font-semibold transition-all shadow-air-sm hover:shadow-air flex items-center">
                 <Plus className="h-5 w-5 mr-2" /> Add Expense
               </button>
             </div>
@@ -550,22 +551,22 @@ const Dashboard = ({ setIsAuthenticated }) => {
               {expenses.length === 0 ? (
                 <EmptyState icon={DollarSign} title="No expenses yet" description="Add your first expense to start tracking" actionLabel="Add Expense" onAction={() => setShowAddExpenseModal(true)} />
               ) : expenses.map(expense => (
-                <div key={expense.id} className="bg-gray-900 border border-blue-500 rounded-xl p-6 transition-all duration-200 hover:border-blue-400" style={{ boxShadow: '0 0 15px rgba(59, 130, 246, 0.15)' }}>
+                <div key={expense.id} className="card-air p-6 transition-all duration-200 hover:shadow-air-lg">
                   <div className="flex justify-between items-start">
                     <div className="flex items-start space-x-4 flex-1">
                       <Avatar name={expense.paidByName} />
                       <div>
-                        <h3 className="text-lg font-bold text-white">{expense.description}</h3>
-                        <p className="text-gray-400 text-sm mt-1">Paid by {expense.paidByName} on {expense.date}</p>
+                        <h3 className="text-lg font-bold text-[#222222]">{expense.description}</h3>
+                        <p className="text-[#717171] text-sm mt-1">Paid by {expense.paidByName} on {expense.date}</p>
                         <div className="flex items-center space-x-2 mt-2">
-                          <span className="text-xs bg-blue-900 text-blue-300 px-2 py-0.5 rounded">{expense.splitType || 'equal'}</span>
-                          <span className="text-xs bg-gray-800 text-gray-400 px-2 py-0.5 rounded">{expense.category}</span>
-                          {expense.receiptUrl && <span className="text-xs text-cyan-400">📎 Receipt</span>}
+                          <span className="text-xs bg-coral-50 text-coral-600 px-2 py-0.5 rounded-pill font-medium">{expense.splitType || 'equal'}</span>
+                          <span className="text-xs bg-[#F7F7F7] text-[#717171] px-2 py-0.5 rounded-pill">{expense.category}</span>
+                          {expense.receiptUrl && <span className="text-xs text-coral-500">📎 Receipt</span>}
                         </div>
                         {expense.splits && (
                           <div className="flex flex-wrap gap-1 mt-2">
                             {expense.splits.map(s => (
-                              <span key={s.userId} className="text-xs text-gray-500 bg-gray-800 px-2 py-0.5 rounded-full">
+                              <span key={s.userId} className="text-xs text-[#717171] bg-[#F7F7F7] px-2 py-0.5 rounded-pill">
                                 {s.firstName} {s.lastName}: ₹{Number(s.amount).toFixed(2)}
                               </span>
                             ))}
@@ -574,9 +575,9 @@ const Dashboard = ({ setIsAuthenticated }) => {
                       </div>
                     </div>
                     <div className="flex items-center space-x-3">
-                      <span className="text-2xl font-bold text-blue-400">₹{Number(expense.amount).toFixed(2)}</span>
+                      <span className="text-2xl font-bold text-coral-500">₹{Number(expense.amount).toFixed(2)}</span>
                       <button onClick={() => setConfirmDelete({ type: 'expense', id: expense.id })}
-                        className="text-red-400 hover:text-red-300 transition-colors">
+                        className="text-[#717171] hover:text-coral-500 transition-colors">
                         <Trash2 className="h-5 w-5" />
                       </button>
                     </div>
@@ -591,9 +592,9 @@ const Dashboard = ({ setIsAuthenticated }) => {
         {activeTab === 'chores' && (
           <div>
             <div className="flex justify-between items-center mb-6">
-              <h2 className="text-2xl font-bold text-white">Chores</h2>
+              <h2 className="text-2xl font-bold text-[#222222]">Chores</h2>
               <button onClick={() => setShowAddChoreModal(true)}
-                className="bg-gradient-to-r from-blue-600 to-cyan-500 hover:from-blue-700 hover:to-cyan-600 text-white px-4 py-2 rounded-lg font-medium transition-all flex items-center shadow-lg">
+                className="bg-coral-500 hover:bg-coral-600 text-white px-4 py-2.5 rounded-pill font-semibold transition-all shadow-air-sm hover:shadow-air flex items-center">
                 <Plus className="h-5 w-5 mr-2" /> Add Chore
               </button>
             </div>
@@ -601,37 +602,37 @@ const Dashboard = ({ setIsAuthenticated }) => {
               {chores.length === 0 ? (
                 <EmptyState icon={CheckSquare} title="No chores yet" description="Add your first chore" actionLabel="Add Chore" onAction={() => setShowAddChoreModal(true)} />
               ) : chores.map(chore => (
-                <div key={chore.id} className={`bg-gray-900 border rounded-xl p-6 transition-all duration-200 ${
-                  chore.completed ? 'border-green-500 opacity-75' : 'border-cyan-500'
-                }`} style={{ boxShadow: `0 0 15px ${chore.completed ? 'rgba(34, 197, 94, 0.15)' : 'rgba(34, 211, 238, 0.15)'}` }}>
+                <div key={chore.id} className={`card-air p-6 transition-all duration-200 ${
+                  chore.completed ? 'opacity-60' : ''
+                }`}>
                   <div className="flex justify-between items-start">
                     <div className="flex items-start space-x-3 flex-1">
                       <button onClick={() => toggleChore(chore.id)}
-                        className={`mt-1 transition-all duration-200 active:scale-90 ${chore.completed ? 'text-green-400' : 'text-gray-600 hover:text-gray-400'}`}>
-                        {chore.completed ? <CheckSquare className="h-6 w-6" /> : <div className="h-6 w-6 border-2 border-gray-600 rounded hover:border-cyan-400"></div>}
+                        className={`mt-1 transition-all duration-200 active:scale-90 ${chore.completed ? 'text-emerald-500' : 'text-[#DDDDDD] hover:text-coral-400'}`}>
+                        {chore.completed ? <CheckSquare className="h-6 w-6" /> : <div className="h-6 w-6 border-2 border-[#DDDDDD] rounded-lg hover:border-coral-400"></div>}
                       </button>
                       <div className="flex-1">
                         <div className="flex items-center space-x-2">
                           <Avatar name={chore.assignedToName} size="sm" />
-                          <h3 className={`text-lg font-bold ${chore.completed ? 'line-through text-gray-500' : 'text-white'}`}>
+                          <h3 className={`text-lg font-bold ${chore.completed ? 'line-through text-[#717171]' : 'text-[#222222]'}`}>
                             {chore.title}
                           </h3>
                         </div>
-                        <p className="text-gray-400 text-sm mt-1 ml-10">
+                        <p className="text-[#717171] text-sm mt-1 ml-10">
                           Assigned to {chore.assignedToName} • Due {chore.dueDate}
                         </p>
                         <div className="flex items-center space-x-2 mt-2 ml-10">
-                          <span className={`text-xs px-2 py-0.5 rounded ${
-                            chore.priority === 'high' ? 'bg-red-900 text-red-300' :
-                            chore.priority === 'medium' ? 'bg-yellow-900 text-yellow-300' :
-                            'bg-green-900 text-green-300'
+                          <span className={`text-xs px-3 py-0.5 rounded-pill font-medium ${
+                            chore.priority === 'high' ? 'bg-red-50 text-red-600' :
+                            chore.priority === 'medium' ? 'bg-yellow-50 text-yellow-700' :
+                            'bg-emerald-50 text-emerald-700'
                           }`}>{chore.priority}</span>
-                          {chore.isRecurring && <span className="text-xs bg-purple-900 text-purple-300 px-2 py-0.5 rounded">🔄 {chore.recurringFrequency}</span>}
+                          {chore.isRecurring && <span className="text-xs bg-coral-50 text-coral-600 px-3 py-0.5 rounded-pill font-medium">🔄 {chore.recurringFrequency}</span>}
                         </div>
                       </div>
                     </div>
                     <button onClick={() => setConfirmDelete({ type: 'chore', id: chore.id })}
-                      className="text-red-400 hover:text-red-300 transition-colors ml-3">
+                      className="text-[#717171] hover:text-coral-500 transition-colors ml-3">
                       <Trash2 className="h-5 w-5" />
                     </button>
                   </div>
@@ -645,35 +646,35 @@ const Dashboard = ({ setIsAuthenticated }) => {
         {activeTab === 'shopping' && (
           <div>
             <div className="flex justify-between items-center mb-6">
-              <h2 className="text-2xl font-bold text-white flex items-center"><ShoppingCart className="h-6 w-6 mr-2 text-blue-400" /> Shopping List</h2>
+              <h2 className="text-2xl font-bold text-[#222222] flex items-center"><ShoppingCart className="h-6 w-6 mr-2 text-coral-500" /> Shopping List</h2>
             </div>
-            <div className="bg-gray-900 border border-blue-500 rounded-xl p-6 mb-6">
+            <div className="card-air p-6 mb-6">
               <div className="flex space-x-3">
                 <input type="text" value={newShoppingItem} onChange={e => setNewShoppingItem(e.target.value)}
                   onKeyDown={e => e.key === 'Enter' && addShoppingItem()}
-                  className="flex-1 px-4 py-3 bg-gray-800 border border-gray-700 rounded-lg text-white focus:border-blue-500 focus:outline-none"
+                  className="flex-1 px-4 py-3 bg-white border-2 border-[#DDDDDD] rounded-xl text-[#222222] focus:border-[#222222] focus:outline-none placeholder-[#999999]"
                   placeholder="Add item to shopping list..." />
                 <button onClick={addShoppingItem}
-                  className="bg-gradient-to-r from-blue-600 to-cyan-500 text-white px-6 py-3 rounded-lg font-medium transition-all">Add</button>
+                  className="bg-coral-500 hover:bg-coral-600 text-white px-6 py-3 rounded-pill font-semibold transition-all shadow-air-sm">Add</button>
               </div>
             </div>
             <div className="space-y-3">
               {shoppingItems.length === 0 ? (
                 <EmptyState icon={ShoppingCart} title="Shopping list empty" description="Add items you need to buy" />
               ) : shoppingItems.map(item => (
-                <div key={item.id} className="bg-gray-900 border border-gray-800 rounded-xl p-4 flex items-center justify-between transition-all duration-200 hover:border-blue-500">
+                <div key={item.id} className="card-air p-4 flex items-center justify-between transition-all duration-200 hover:shadow-air-lg">
                   <div className="flex items-center space-x-4">
                     <button onClick={() => toggleShoppingItem(item.id)}
-                      className={`transition-all duration-200 active:scale-90 ${item.isChecked ? 'text-green-400' : 'text-gray-600'}`}>
-                      {item.isChecked ? <CheckSquare className="h-6 w-6" /> : <div className="h-6 w-6 border-2 border-gray-600 rounded"></div>}
+                      className={`transition-all duration-200 active:scale-90 ${item.isChecked ? 'text-emerald-500' : 'text-[#DDDDDD] hover:text-coral-400'}`}>
+                      {item.isChecked ? <CheckSquare className="h-6 w-6" /> : <div className="h-6 w-6 border-2 border-[#DDDDDD] rounded-lg"></div>}
                     </button>
                     <div>
-                      <p className={`text-white font-medium ${item.isChecked ? 'line-through text-gray-500' : ''}`}>{item.name}</p>
-                      <p className="text-gray-500 text-xs">Added by {item.addedByFirstName} {item.addedByLastName}</p>
+                      <p className={`text-[#222222] font-medium ${item.isChecked ? 'line-through text-[#717171]' : ''}`}>{item.name}</p>
+                      <p className="text-[#717171] text-xs">Added by {item.addedByFirstName} {item.addedByLastName}</p>
                     </div>
                   </div>
                   <button onClick={() => setConfirmDelete({ type: 'shopping', id: item.id })}
-                    className="text-red-400 hover:text-red-300 transition-colors">
+                    className="text-[#717171] hover:text-coral-500 transition-colors">
                     <Trash2 className="h-4 w-4" />
                   </button>
                 </div>
@@ -685,20 +686,20 @@ const Dashboard = ({ setIsAuthenticated }) => {
         {/* Roommates Tab */}
         {activeTab === 'roommates' && (
           <div>
-            <h2 className="text-2xl font-bold text-white mb-6 flex items-center"><Users className="h-6 w-6 mr-2 text-blue-400" /> Roommates</h2>
+            <h2 className="text-2xl font-bold text-[#222222] mb-6 flex items-center"><Users className="h-6 w-6 mr-2 text-coral-500" /> Roommates</h2>
             <div className="grid md:grid-cols-2 gap-4">
               {roommates.length === 0 ? (
                 <EmptyState icon={Users} title="No roommates yet" description="Invite your roommates to join your house" />
               ) : roommates.map(rm => (
-                <div key={rm.id} className="bg-gray-900 border border-blue-500 rounded-xl p-6 transition-all duration-200 hover:border-blue-400" style={{ boxShadow: '0 0 15px rgba(59, 130, 246, 0.15)' }}>
+                <div key={rm.id} className="card-air p-6 transition-all duration-200 hover:shadow-air-lg">
                   <div className="flex items-center space-x-4">
                     <Avatar name={`${rm.firstName || ''} ${rm.lastName || ''}`} size="lg" />
                     <div>
-                      <h3 className="text-lg font-bold text-white">{rm.firstName} {rm.lastName}</h3>
-                      <p className="text-gray-400 text-sm">{rm.email}</p>
-                      {rm.upiId && <p className="text-cyan-400 text-xs mt-1">UPI: {rm.upiId}</p>}
-                      <span className={`inline-block mt-1 text-xs px-2 py-0.5 rounded ${
-                        rm.role === 'admin' ? 'bg-blue-900 text-blue-300' : 'bg-gray-700 text-gray-300'
+                      <h3 className="text-lg font-bold text-[#222222]">{rm.firstName} {rm.lastName}</h3>
+                      <p className="text-[#717171] text-sm">{rm.email}</p>
+                      {rm.upiId && <p className="text-coral-500 text-xs mt-1 font-medium">UPI: {rm.upiId}</p>}
+                      <span className={`inline-block mt-1 text-xs px-3 py-0.5 rounded-pill font-medium ${
+                        rm.role === 'admin' ? 'bg-coral-50 text-coral-600' : 'bg-[#F7F7F7] text-[#717171]'
                       }`}>{rm.role}</span>
                     </div>
                   </div>
@@ -714,17 +715,17 @@ const Dashboard = ({ setIsAuthenticated }) => {
         {/* Profile Tab */}
         {activeTab === 'profile' && (
           <div className="max-w-md mx-auto">
-            <h2 className="text-2xl font-bold text-white mb-6 flex items-center"><User className="h-6 w-6 mr-2 text-blue-400" /> Profile</h2>
-            <div className="bg-gray-900 border border-blue-500 rounded-xl p-6 space-y-6">
+            <h2 className="text-2xl font-bold text-[#222222] mb-6 flex items-center"><User className="h-6 w-6 mr-2 text-coral-500" /> Profile</h2>
+            <div className="card-air p-6 space-y-6">
               <div className="flex items-center space-x-4">
                 <Avatar name={`${currentUser?.firstName || ''} ${currentUser?.lastName || ''}`} size="xl" />
                 <div>
-                  <h3 className="text-xl font-bold text-white">{currentUser?.firstName} {currentUser?.lastName}</h3>
-                  <p className="text-gray-400">{currentUser?.email}</p>
+                  <h3 className="text-xl font-bold text-[#222222]">{currentUser?.firstName} {currentUser?.lastName}</h3>
+                  <p className="text-[#717171]">{currentUser?.email}</p>
                 </div>
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-300 mb-2">UPI ID</label>
+                <label className="block text-sm font-medium text-[#717171] mb-2">UPI ID</label>
                 <input type="text" value={currentUser?.upiId || ''} onChange={async (e) => {
                   const newUpi = e.target.value;
                   try {
@@ -737,21 +738,21 @@ const Dashboard = ({ setIsAuthenticated }) => {
                     }
                   } catch (err) { toast.error('Failed to update UPI ID'); }
                 }}
-                  className="w-full px-4 py-2 bg-gray-800 border border-gray-700 rounded-lg text-white focus:border-blue-500 focus:outline-none"
+                  className="w-full px-4 py-2 bg-white border-2 border-[#DDDDDD] rounded-xl text-[#222222] focus:border-[#222222] focus:outline-none placeholder-[#999999]"
                   placeholder="example@paytm" />
               </div>
-              <div className="border-t border-gray-700 pt-4">
-                <h4 className="text-white font-medium mb-3">Settlement History</h4>
+              <div className="border-t border-[#DDDDDD] pt-4">
+                <h4 className="text-[#222222] font-semibold mb-3">Settlement History</h4>
                 {settlements.length === 0 ? (
-                  <p className="text-gray-500 text-sm">No settlements yet</p>
+                  <p className="text-[#717171] text-sm">No settlements yet</p>
                 ) : (
                   <div className="space-y-2 max-h-48 overflow-y-auto">
                     {settlements.map(s => (
-                      <div key={s.id} className="bg-gray-800 p-3 rounded-lg border border-gray-700 text-sm">
-                        <p className="text-gray-300">{s.fromFirstName} {s.fromLastName} paid {s.toFirstName} {s.toLastName}</p>
-                        <p className="text-green-400 font-bold">₹{Number(s.amount).toFixed(2)}</p>
-                        {s.note && <p className="text-gray-500 text-xs">{s.note}</p>}
-                        <p className="text-gray-600 text-xs">{new Date(s.settledAt).toLocaleDateString()}</p>
+                      <div key={s.id} className="bg-[#F7F7F7] p-3 rounded-xl text-sm">
+                        <p className="text-[#222222]">{s.fromFirstName} {s.fromLastName} paid {s.toFirstName} {s.toLastName}</p>
+                        <p className="text-coral-500 font-bold">₹{Number(s.amount).toFixed(2)}</p>
+                        {s.note && <p className="text-[#717171] text-xs">{s.note}</p>}
+                        <p className="text-[#999999] text-xs">{new Date(s.settledAt).toLocaleDateString()}</p>
                       </div>
                     ))}
                   </div>
@@ -770,31 +771,31 @@ const Dashboard = ({ setIsAuthenticated }) => {
       {/* ADD EXPENSE MODAL (with Smart Splitting) */}
       {/* ──────────────────────────────────────────────── */}
       {showAddExpenseModal && (
-        <div className="fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center p-4 z-50">
-          <div className="bg-gray-900 border border-blue-500 rounded-xl p-6 w-full max-w-lg max-h-[90vh] overflow-y-auto" style={{ boxShadow: '0 0 40px rgba(59, 130, 246, 0.5)' }}>
+        <div className="fixed inset-0 bg-black/40 flex items-center justify-center p-4 z-50">
+          <div className="bg-white rounded-air shadow-air-lg p-6 w-full max-w-lg max-h-[90vh] overflow-y-auto">
             <div className="flex justify-between items-center mb-4">
-              <h3 className="text-xl font-bold text-white">Add Expense</h3>
-              <button onClick={() => { setShowAddExpenseModal(false); resetExpenseForm(); }} className="text-gray-400 hover:text-white">
+              <h3 className="text-xl font-bold text-[#222222]">Add Expense</h3>
+              <button onClick={() => { setShowAddExpenseModal(false); resetExpenseForm(); }} className="text-[#717171] hover:text-[#222222]">
                 <X className="h-6 w-6" />
               </button>
             </div>
             <div className="space-y-4">
               <div>
-                <label className="block text-sm font-medium text-gray-300 mb-2">Description</label>
+                <label className="block text-sm font-medium text-[#717171] mb-2">Description</label>
                 <input type="text" value={newExpense.description}
                   onChange={(e) => setNewExpense({ ...newExpense, description: e.target.value })}
-                  className="w-full px-4 py-2 bg-gray-800 border border-gray-700 rounded-lg text-white focus:border-blue-500 focus:outline-none"
+                  className="w-full px-4 py-2 bg-white border-2 border-[#DDDDDD] rounded-xl text-[#222222] focus:border-[#222222] focus:outline-none placeholder-[#999999]"
                   placeholder="e.g., Electricity Bill" />
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-300 mb-2">Amount (₹)</label>
+                <label className="block text-sm font-medium text-[#717171] mb-2">Amount (₹)</label>
                 <input type="number" value={newExpense.amount}
                   onChange={(e) => setNewExpense({ ...newExpense, amount: e.target.value })}
-                  className="w-full px-4 py-2 bg-gray-800 border border-gray-700 rounded-lg text-white focus:border-blue-500 focus:outline-none"
+                  className="w-full px-4 py-2 bg-white border-2 border-[#DDDDDD] rounded-xl text-[#222222] focus:border-[#222222] focus:outline-none placeholder-[#999999]"
                   placeholder="0.00" />
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-300 mb-2">Paid By</label>
+                <label className="block text-sm font-medium text-[#717171] mb-2">Paid By</label>
                 <select value={newExpense.paidBy}
                   onChange={(e) => { const pid = parseInt(e.target.value); setNewExpense({ ...newExpense, paidBy: pid }); }}
                   className="w-full px-4 py-2 bg-gray-800 border border-gray-700 rounded-lg text-white focus:border-blue-500 focus:outline-none">
@@ -846,15 +847,15 @@ const Dashboard = ({ setIsAuthenticated }) => {
 
               {/* Split With */}
               <div>
-                <label className="block text-sm font-medium text-gray-300 mb-2">Split With</label>
-                <div className="space-y-2 bg-gray-800 p-3 rounded-lg border border-gray-700">
+                <label className="block text-sm font-medium text-[#717171] mb-2">Split With</label>
+                <div className="space-y-2 bg-[#F7F7F7] p-3 rounded-xl border border-[#DDDDDD]">
                   {roommates.filter(r => r.id !== Number(newExpense.paidBy)).map(rm => (
                     <label key={rm.id} className="flex items-center space-x-2 cursor-pointer">
                       <input type="checkbox" checked={newExpense.splitWith.includes(rm.id)}
                         onChange={() => toggleSplitWith(rm.id)}
-                        className="rounded border-gray-600 text-blue-500 focus:ring-blue-500 bg-gray-700" />
+                        className="rounded border-[#DDDDDD] text-coral-500 focus:ring-coral-500" />
                       <Avatar name={`${rm.firstName || ''} ${rm.lastName || ''}`} size="sm" />
-                      <span className="text-gray-300">{rm.firstName} {rm.lastName}</span>
+                      <span className="text-[#222222]">{rm.firstName} {rm.lastName}</span>
                     </label>
                   ))}
                 </div>
@@ -863,24 +864,24 @@ const Dashboard = ({ setIsAuthenticated }) => {
               {/* Split Values (for percentage/custom) */}
               {newExpense.splitType !== 'equal' && newExpense.splitWith.length > 0 && (
                 <div>
-                  <label className="block text-sm font-medium text-gray-300 mb-2">
+                  <label className="block text-sm font-medium text-[#717171] mb-2">
                     {newExpense.splitType === 'percentage' ? 'Percentages' : 'Custom Amounts (₹)'}
                   </label>
-                  <div className="space-y-2 bg-gray-800 p-3 rounded-lg border border-gray-700">
+                  <div className="space-y-2 bg-[#F7F7F7] p-3 rounded-xl border border-[#DDDDDD]">
                     {[...newExpense.splitWith, Number(newExpense.paidBy)].map(userId => {
                       const rm = roommates.find(r => r.id === userId);
                       if (!rm) return null;
                       const split = newExpense.splits?.find(s => s.userId === userId);
                       return (
                         <div key={userId} className="flex items-center justify-between">
-                          <span className="text-gray-300 text-sm">{rm.firstName || rm.name} {rm.lastName || ''}</span>
+                          <span className="text-[#222222] text-sm font-medium">{rm.firstName || rm.name} {rm.lastName || ''}</span>
                           <div className="flex items-center space-x-2">
                             <input type="number"
                               value={split?.value || 0}
                               onChange={(e) => updateSplitValue(userId, e.target.value)}
-                              className="w-24 px-3 py-1.5 bg-gray-700 border border-gray-600 rounded-lg text-white text-sm focus:border-blue-500 focus:outline-none text-right"
+                              className="w-24 px-3 py-1.5 bg-white border-2 border-[#DDDDDD] rounded-xl text-[#222222] text-sm focus:border-[#222222] focus:outline-none text-right"
                               placeholder={newExpense.splitType === 'percentage' ? '%' : '₹'} />
-                            {newExpense.splitType === 'percentage' && <span className="text-gray-400 text-sm">%</span>}
+                            {newExpense.splitType === 'percentage' && <span className="text-[#717171] text-sm">%</span>}
                           </div>
                         </div>
                       );
@@ -890,7 +891,7 @@ const Dashboard = ({ setIsAuthenticated }) => {
               )}
 
               <button onClick={addExpense}
-                className="w-full bg-gradient-to-r from-blue-600 to-cyan-500 hover:from-blue-700 hover:to-cyan-600 text-white py-3 px-4 rounded-lg font-medium transition-all active:scale-[0.98]">
+                className="w-full bg-coral-500 hover:bg-coral-600 text-white py-3 px-4 rounded-pill font-semibold transition-all shadow-air-sm hover:shadow-air active:scale-[0.97]">
                 Add Expense
               </button>
             </div>
@@ -902,27 +903,27 @@ const Dashboard = ({ setIsAuthenticated }) => {
       {/* ADD CHORE MODAL (with Recurring Support) */}
       {/* ──────────────────────────────────────────────── */}
       {showAddChoreModal && (
-        <div className="fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center p-4 z-50">
-          <div className="bg-gray-900 border border-cyan-500 rounded-xl p-6 w-full max-w-lg max-h-[90vh] overflow-y-auto" style={{ boxShadow: '0 0 40px rgba(34, 211, 238, 0.5)' }}>
+        <div className="fixed inset-0 bg-black/40 flex items-center justify-center p-4 z-50">
+          <div className="bg-white rounded-air shadow-air-lg p-6 w-full max-w-lg max-h-[90vh] overflow-y-auto">
             <div className="flex justify-between items-center mb-4">
-              <h3 className="text-xl font-bold text-white">Add Chore</h3>
-              <button onClick={() => setShowAddChoreModal(false)} className="text-gray-400 hover:text-white">
+              <h3 className="text-xl font-bold text-[#222222]">Add Chore</h3>
+              <button onClick={() => setShowAddChoreModal(false)} className="text-[#717171] hover:text-[#222222]">
                 <X className="h-6 w-6" />
               </button>
             </div>
             <div className="space-y-4">
               <div>
-                <label className="block text-sm font-medium text-gray-300 mb-2">Title</label>
+                <label className="block text-sm font-medium text-[#717171] mb-2">Title</label>
                 <input type="text" value={newChore.title}
                   onChange={(e) => setNewChore({ ...newChore, title: e.target.value })}
-                  className="w-full px-4 py-2 bg-gray-800 border border-gray-700 rounded-lg text-white focus:border-cyan-500 focus:outline-none"
+                  className="w-full px-4 py-2 bg-white border-2 border-[#DDDDDD] rounded-xl text-[#222222] focus:border-[#222222] focus:outline-none"
                   placeholder="e.g., Clean Kitchen" />
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-300 mb-2">Assign To</label>
+                <label className="block text-sm font-medium text-[#717171] mb-2">Assign To</label>
                 <select value={newChore.assignedTo}
                   onChange={(e) => { const val = e.target.value; setNewChore({ ...newChore, assignedTo: val === 'other' ? 'other' : parseInt(val) }); }}
-                  className="w-full px-4 py-2 bg-gray-800 border border-gray-700 rounded-lg text-white focus:border-cyan-500 focus:outline-none">
+                  className="w-full px-4 py-2 bg-white border-2 border-[#DDDDDD] rounded-xl text-[#222222] focus:border-[#222222] focus:outline-none">
                   {roommates.map(rm => (
                     <option key={rm.id} value={rm.id}>{rm.firstName || rm.name} {rm.lastName || ''}</option>
                   ))}
@@ -931,38 +932,40 @@ const Dashboard = ({ setIsAuthenticated }) => {
                 {newChore.assignedTo === 'other' && (
                   <input type="text" value={newChore.customAssignee}
                     onChange={(e) => setNewChore({ ...newChore, customAssignee: e.target.value })}
-                    className="mt-2 w-full px-4 py-2 bg-gray-800 border border-gray-700 rounded-lg text-white focus:border-cyan-500 focus:outline-none"
+                    className="mt-2 w-full px-4 py-2 bg-white border-2 border-[#DDDDDD] rounded-xl text-[#222222] focus:border-[#222222] focus:outline-none"
                     placeholder="Enter name" />
                 )}
               </div>
 
               {/* Recurring Toggle */}
-              <div className="flex items-center justify-between bg-gray-800 p-3 rounded-lg border border-gray-700">
+              <div className="flex items-center justify-between bg-[#F7F7F7] p-3 rounded-xl border border-[#DDDDDD]">
                 <div>
-                  <span className="text-gray-300 font-medium">Recurring Chore</span>
-                  <p className="text-gray-500 text-xs mt-0.5">Auto-rotate between roommates</p>
+                  <span className="text-[#222222] font-medium text-sm">Recurring Chore</span>
+                  <p className="text-[#717171] text-xs mt-0.5">Auto-rotate between roommates</p>
                 </div>
                 <button onClick={() => setNewChore({ ...newChore, isRecurring: !newChore.isRecurring })}
-                  className={`w-12 h-6 rounded-full transition-colors ${newChore.isRecurring ? 'bg-blue-600' : 'bg-gray-700'}`}>
-                  <div className={`w-4 h-4 bg-white rounded-full transition-transform ${newChore.isRecurring ? 'translate-x-7' : 'translate-x-1'}`} />
+                  className="w-11 h-6 rounded-full transition-colors flex items-center">
+                  <div className={`w-full h-full rounded-full ${newChore.isRecurring ? 'bg-coral-500' : 'bg-[#DDDDDD]'} flex items-center`}>
+                    <div className={`w-5 h-5 bg-white rounded-full shadow-air-sm transition-transform ${newChore.isRecurring ? 'translate-x-[22px]' : 'translate-x-0.5'}`} />
+                  </div>
                 </button>
               </div>
 
               {newChore.isRecurring && (
                 <>
                   <div>
-                    <label className="block text-sm font-medium text-gray-300 mb-2">Frequency</label>
+                    <label className="block text-sm font-medium text-[#717171] mb-2">Frequency</label>
                     <select value={newChore.recurringFrequency}
                       onChange={(e) => setNewChore({ ...newChore, recurringFrequency: e.target.value })}
-                      className="w-full px-4 py-2 bg-gray-800 border border-gray-700 rounded-lg text-white focus:border-cyan-500 focus:outline-none">
+                      className="w-full px-4 py-2 bg-white border-2 border-[#DDDDDD] rounded-xl text-[#222222] focus:border-[#222222] focus:outline-none">
                       <option value="daily">Daily</option>
                       <option value="weekly">Weekly</option>
                       <option value="monthly">Monthly</option>
                     </select>
                   </div>
                   <div>
-                    <label className="block text-sm font-medium text-gray-300 mb-2">Rotation Order</label>
-                    <div className="space-y-2 bg-gray-800 p-3 rounded-lg border border-gray-700">
+                    <label className="block text-sm font-medium text-[#717171] mb-2">Rotation Order</label>
+                    <div className="space-y-2 bg-[#F7F7F7] p-3 rounded-xl border border-[#DDDDDD]">
                       {roommates.map(rm => (
                         <label key={rm.id} className="flex items-center space-x-2 cursor-pointer">
                           <input type="checkbox"
@@ -975,9 +978,9 @@ const Dashboard = ({ setIsAuthenticated }) => {
                                   : [...prev.rotationOrder, rm.id]
                               }));
                             }}
-                            className="rounded border-gray-600 text-cyan-500 focus:ring-cyan-500 bg-gray-700" />
+                            className="rounded border-[#DDDDDD] text-coral-500 focus:ring-coral-500" />
                           <Avatar name={`${rm.firstName || ''} ${rm.lastName || ''}`} size="sm" />
-                          <span className="text-gray-300">{rm.firstName} {rm.lastName}</span>
+                          <span className="text-[#222222]">{rm.firstName} {rm.lastName}</span>
                         </label>
                       ))}
                     </div>
@@ -986,23 +989,23 @@ const Dashboard = ({ setIsAuthenticated }) => {
               )}
 
               <div>
-                <label className="block text-sm font-medium text-gray-300 mb-2">Due Date</label>
+                <label className="block text-sm font-medium text-[#717171] mb-2">Due Date</label>
                 <input type="date" value={newChore.dueDate}
                   onChange={(e) => setNewChore({ ...newChore, dueDate: e.target.value })}
-                  className="w-full px-4 py-2 bg-gray-800 border border-gray-700 rounded-lg text-white focus:border-cyan-500 focus:outline-none" />
+                  className="w-full px-4 py-2 bg-white border-2 border-[#DDDDDD] rounded-xl text-[#222222] focus:border-[#222222] focus:outline-none" />
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-300 mb-2">Priority</label>
+                <label className="block text-sm font-medium text-[#717171] mb-2">Priority</label>
                 <select value={newChore.priority}
                   onChange={(e) => setNewChore({ ...newChore, priority: e.target.value })}
-                  className="w-full px-4 py-2 bg-gray-800 border border-gray-700 rounded-lg text-white focus:border-cyan-500 focus:outline-none">
+                  className="w-full px-4 py-2 bg-white border-2 border-[#DDDDDD] rounded-xl text-[#222222] focus:border-[#222222] focus:outline-none">
                   <option value="low">Low</option>
                   <option value="medium">Medium</option>
                   <option value="high">High</option>
                 </select>
               </div>
               <button onClick={addChore}
-                className="w-full bg-gradient-to-r from-cyan-600 to-blue-500 hover:from-cyan-700 hover:to-blue-600 text-white py-3 px-4 rounded-lg font-medium transition-all active:scale-[0.98]">
+                className="w-full bg-coral-500 hover:bg-coral-600 text-white py-3 px-4 rounded-pill font-semibold transition-all shadow-air-sm hover:shadow-air active:scale-[0.97]">
                 {newChore.isRecurring ? 'Add Recurring Chore' : 'Add Chore'}
               </button>
             </div>
@@ -1014,20 +1017,20 @@ const Dashboard = ({ setIsAuthenticated }) => {
       {/* SETTLE UP MODAL */}
       {/* ──────────────────────────────────────────────── */}
       {showSettleModal && (
-        <div className="fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center p-4 z-50">
-          <div className="bg-gray-900 border border-green-500 rounded-xl p-6 w-full max-w-md" style={{ boxShadow: '0 0 40px rgba(34, 197, 94, 0.5)' }}>
+        <div className="fixed inset-0 bg-black/40 flex items-center justify-center p-4 z-50">
+          <div className="bg-white rounded-air shadow-air-lg p-6 w-full max-w-md">
             <div className="flex justify-between items-center mb-4">
-              <h3 className="text-xl font-bold text-white flex items-center"><Send className="h-5 w-5 mr-2 text-green-400" /> Settle Up</h3>
-              <button onClick={() => { setShowSettleModal(false); setNewSettlement({ from: '', to: '', amount: '', note: '' }); }} className="text-gray-400 hover:text-white">
+              <h3 className="text-xl font-bold text-[#222222] flex items-center"><Send className="h-5 w-5 mr-2 text-coral-500" /> Settle Up</h3>
+              <button onClick={() => { setShowSettleModal(false); setNewSettlement({ from: '', to: '', amount: '', note: '' }); }} className="text-[#717171] hover:text-[#222222]">
                 <X className="h-6 w-6" />
               </button>
             </div>
             <div className="space-y-4">
               <div>
-                <label className="block text-sm font-medium text-gray-300 mb-2">Who is paying?</label>
+                <label className="block text-sm font-medium text-[#717171] mb-2">Who is paying?</label>
                 <select value={newSettlement.from}
                   onChange={(e) => setNewSettlement({ ...newSettlement, from: parseInt(e.target.value) })}
-                  className="w-full px-4 py-2 bg-gray-800 border border-gray-700 rounded-lg text-white focus:border-green-500 focus:outline-none">
+                  className="w-full px-4 py-2 bg-white border-2 border-[#DDDDDD] rounded-xl text-[#222222] focus:border-[#222222] focus:outline-none">
                   <option value="">Select person</option>
                   {roommates.map(rm => (
                     <option key={rm.id} value={rm.id}>{rm.firstName || rm.name} {rm.lastName || ''}</option>
@@ -1035,10 +1038,10 @@ const Dashboard = ({ setIsAuthenticated }) => {
                 </select>
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-300 mb-2">Who is receiving?</label>
+                <label className="block text-sm font-medium text-[#717171] mb-2">Who is receiving?</label>
                 <select value={newSettlement.to}
                   onChange={(e) => setNewSettlement({ ...newSettlement, to: parseInt(e.target.value) })}
-                  className="w-full px-4 py-2 bg-gray-800 border border-gray-700 rounded-lg text-white focus:border-green-500 focus:outline-none">
+                  className="w-full px-4 py-2 bg-white border-2 border-[#DDDDDD] rounded-xl text-[#222222] focus:border-[#222222] focus:outline-none">
                   <option value="">Select person</option>
                   {roommates.filter(r => r.id !== Number(newSettlement.from)).map(rm => (
                     <option key={rm.id} value={rm.id}>{rm.firstName || rm.name} {rm.lastName || ''}</option>
@@ -1046,23 +1049,23 @@ const Dashboard = ({ setIsAuthenticated }) => {
                 </select>
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-300 mb-2">Amount (₹)</label>
+                <label className="block text-sm font-medium text-[#717171] mb-2">Amount (₹)</label>
                 <input type="number" value={newSettlement.amount}
                   onChange={(e) => setNewSettlement({ ...newSettlement, amount: e.target.value })}
-                  className="w-full px-4 py-2 bg-gray-800 border border-gray-700 rounded-lg text-white focus:border-green-500 focus:outline-none"
+                  className="w-full px-4 py-2 bg-white border-2 border-[#DDDDDD] rounded-xl text-[#222222] focus:border-[#222222] focus:outline-none"
                   placeholder="0.00" />
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-300 mb-2">Note (optional)</label>
+                <label className="block text-sm font-medium text-[#717171] mb-2">Note (optional)</label>
                 <input type="text" value={newSettlement.note}
                   onChange={(e) => setNewSettlement({ ...newSettlement, note: e.target.value })}
-                  className="w-full px-4 py-2 bg-gray-800 border border-gray-700 rounded-lg text-white focus:border-green-500 focus:outline-none"
+                  className="w-full px-4 py-2 bg-white border-2 border-[#DDDDDD] rounded-xl text-[#222222] focus:border-[#222222] focus:outline-none"
                   placeholder="e.g., For dinner" />
               </div>
               {/* UPI Deep Link */}
               {newSettlement.from && newSettlement.to && newSettlement.amount && (
-                <div className="bg-gray-800 rounded-lg p-3 border border-gray-700">
-                  <p className="text-gray-400 text-sm mb-2">Quick payment:</p>
+                <div className="bg-[#F7F7F7] rounded-xl p-3 border border-[#DDDDDD]">
+                  <p className="text-[#717171] text-sm mb-2">Quick payment:</p>
                   {(() => {
                     const toRm = roommates.find(r => r.id === Number(newSettlement.to));
                     const upiId = toRm?.upiId;
@@ -1070,17 +1073,17 @@ const Dashboard = ({ setIsAuthenticated }) => {
                       const upiLink = `upi://pay?pa=${upiId}&pn=${encodeURIComponent(toRm.firstName || '')}&am=${Number(newSettlement.amount)}&cu=INR`;
                       return (
                         <a href={upiLink} target="_blank" rel="noopener noreferrer"
-                          className="flex items-center justify-center space-x-2 bg-blue-600 hover:bg-blue-700 text-white py-2 rounded-lg font-medium transition-colors">
+                          className="flex items-center justify-center space-x-2 bg-coral-500 hover:bg-coral-600 text-white py-2 rounded-pill font-semibold transition-colors">
                           <Send className="h-4 w-4" /> Pay via UPI
                         </a>
                       );
                     }
-                    return <p className="text-gray-500 text-xs">{toRm?.firstName} hasn't set a UPI ID yet</p>;
+                    return <p className="text-[#717171] text-xs">{toRm?.firstName} hasn't set a UPI ID yet</p>;
                   })()}
                 </div>
               )}
               <button onClick={addSettlement}
-                className="w-full bg-gradient-to-r from-green-600 to-emerald-500 hover:from-green-700 hover:to-emerald-600 text-white py-3 px-4 rounded-lg font-medium transition-all active:scale-[0.98]">
+                className="w-full bg-coral-500 hover:bg-coral-600 text-white py-3 px-4 rounded-pill font-semibold transition-all shadow-air-sm hover:shadow-air active:scale-[0.97]">
                 Record Settlement
               </button>
             </div>

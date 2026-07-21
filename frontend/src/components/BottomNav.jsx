@@ -12,7 +12,7 @@ const navItems = [
 
 const BottomNav = ({ activeTab, onTabChange }) => {
   return (
-    <nav className="fixed bottom-0 left-0 right-0 bg-gray-900 border-t border-gray-800 md:hidden z-50">
+    <nav className="fixed bottom-0 left-0 right-0 bg-white border-t border-[#DDDDDD] md:hidden z-50 shadow-air">
       <div className="flex justify-around items-center h-16 px-2">
         {navItems.slice(0, 5).map((item) => (
           <button
@@ -20,12 +20,12 @@ const BottomNav = ({ activeTab, onTabChange }) => {
             onClick={() => onTabChange(item.id)}
             className={`flex flex-col items-center justify-center py-1 px-2 rounded-lg transition-all ${
               activeTab === item.id
-                ? 'text-blue-400'
-                : 'text-gray-500 hover:text-gray-300'
+                ? 'text-coral-500'
+                : 'text-[#717171] hover:text-[#222222]'
             }`}
           >
             <item.icon className="h-5 w-5" />
-            <span className="text-[10px] mt-0.5">{item.label}</span>
+            <span className="text-[10px] mt-0.5 font-medium">{item.label}</span>
           </button>
         ))}
       </div>

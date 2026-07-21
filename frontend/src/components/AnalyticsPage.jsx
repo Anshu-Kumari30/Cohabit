@@ -7,7 +7,7 @@ import SkeletonCard from './SkeletonCard';
 
 ChartJS.register(ArcElement, Tooltip, Legend, CategoryScale, LinearScale, BarElement, PointElement, LineElement, Title);
 
-const COLORS = ['#3b82f6', '#06b6d4', '#8b5cf6', '#f43f5e', '#f59e0b', '#10b981', '#ec4899'];
+const COLORS = ['#FF385C', '#FF6B8A', '#FFB3C1', '#FFE0E6', '#F7F7F7', '#222222', '#DDDDDD'];
 
 const AnalyticsPage = () => {
   const [analytics, setAnalytics] = useState(null);
@@ -33,7 +33,7 @@ const AnalyticsPage = () => {
   if (loading) {
     return (
       <div className="space-y-6">
-        <div className="h-8 bg-gray-800 rounded w-48 animate-pulse"></div>
+        <div className="h-8 bg-gray-200 rounded-xl w-48 animate-pulse"></div>
         <div className="grid md:grid-cols-2 gap-6">
           <SkeletonCard /><SkeletonCard />
         </div>
@@ -46,8 +46,8 @@ const AnalyticsPage = () => {
     datasets: [{
       label: 'Monthly Spend',
       data: (analytics?.monthlyTrend || []).map(m => m.total),
-      borderColor: '#3b82f6',
-      backgroundColor: 'rgba(59, 130, 246, 0.1)',
+      borderColor: '#FF385C',
+      backgroundColor: 'rgba(255, 56, 92, 0.1)',
       fill: true,
       tension: 0.4,
     }]
@@ -67,7 +67,7 @@ const AnalyticsPage = () => {
     datasets: [{
       label: 'Total Spent',
       data: (analytics?.perPerson || []).map(p => p.totalSpent),
-      backgroundColor: COLORS.slice(0, (analytics?.perPerson || []).length),
+      backgroundColor: ['#FF385C', '#FF6B8A', '#FFB3C1', '#222222', '#DDDDDD'].slice(0, (analytics?.perPerson || []).length),
       borderRadius: 8,
     }]
   };
@@ -75,11 +75,11 @@ const AnalyticsPage = () => {
   return (
     <div className="space-y-6">
       <div className="flex justify-between items-center">
-        <h2 className="text-2xl font-bold text-white flex items-center">
-          <TrendingUp className="h-6 w-6 mr-2 text-blue-400" />
+        <h2 className="text-2xl font-bold text-[#222222] flex items-center">
+          <TrendingUp className="h-6 w-6 mr-2 text-coral-500" />
           Analytics
         </h2>
-        <div className="flex items-center space-x-2 bg-gray-800 rounded-lg p-1">
+        <div className="flex items-center space-x-1 bg-[#F7F7F7] rounded-pill p-1">
           {[
             { label: '30 Days', value: '30d' },
             { label: '3 Months', value: '3m' },
@@ -88,10 +88,10 @@ const AnalyticsPage = () => {
             <button
               key={opt.value}
               onClick={() => setRange(opt.value)}
-              className={`px-3 py-1.5 rounded-md text-sm font-medium transition-all ${
+              className={`px-4 py-1.5 rounded-pill text-sm font-semibold transition-all ${
                 range === opt.value
-                  ? 'bg-blue-600 text-white'
-                  : 'text-gray-400 hover:text-white'
+                  ? 'bg-coral-500 text-white shadow-air-sm'
+                  : 'text-[#717171] hover:text-[#222222]'
               }`}
             >
               {opt.label}
@@ -102,9 +102,9 @@ const AnalyticsPage = () => {
 
       <div className="grid md:grid-cols-2 gap-6">
         {/* Monthly Spend Trend */}
-        <div className="bg-gray-900 border border-blue-500 rounded-xl p-6">
-          <h3 className="text-lg font-bold text-white mb-4 flex items-center">
-            <BarChart3 className="h-5 w-5 mr-2 text-blue-400" />
+        <div className="bg-white rounded-air shadow-air p-6">
+          <h3 className="text-lg font-bold text-[#222222] mb-4 flex items-center">
+            <BarChart3 className="h-5 w-5 mr-2 text-coral-500" />
             Monthly Spend Trend
           </h3>
           {analytics?.monthlyTrend?.length > 0 ? (
@@ -112,19 +112,19 @@ const AnalyticsPage = () => {
               responsive: true,
               plugins: { legend: { display: false } },
               scales: {
-                x: { ticks: { color: '#9ca3af' }, grid: { color: '#1f2937' } },
-                y: { ticks: { color: '#9ca3af' }, grid: { color: '#1f2937' } }
+                x: { ticks: { color: '#717171' }, grid: { color: '#DDDDDD' } },
+                y: { ticks: { color: '#717171' }, grid: { color: '#DDDDDD' } }
               }
             }} />
           ) : (
-            <p className="text-gray-500 text-center py-8">No data yet</p>
+            <p className="text-[#717171] text-center py-8">No data yet</p>
           )}
         </div>
 
         {/* Category Breakdown */}
-        <div className="bg-gray-900 border border-cyan-500 rounded-xl p-6">
-          <h3 className="text-lg font-bold text-white mb-4 flex items-center">
-            <PieChart className="h-5 w-5 mr-2 text-cyan-400" />
+        <div className="bg-white rounded-air shadow-air p-6">
+          <h3 className="text-lg font-bold text-[#222222] mb-4 flex items-center">
+            <PieChart className="h-5 w-5 mr-2 text-coral-500" />
             Category Breakdown
           </h3>
           {analytics?.categoryBreakdown?.length > 0 ? (
@@ -135,21 +135,21 @@ const AnalyticsPage = () => {
                   plugins: {
                     legend: {
                       position: 'bottom',
-                      labels: { color: '#9ca3af', padding: 12 }
+                      labels: { color: '#717171', padding: 12 }
                     }
                   }
                 }} />
               </div>
             </div>
           ) : (
-            <p className="text-gray-500 text-center py-8">No data yet</p>
+            <p className="text-[#717171] text-center py-8">No data yet</p>
           )}
         </div>
 
         {/* Per-Person Spending */}
-        <div className="bg-gray-900 border border-blue-500 rounded-xl p-6 md:col-span-2">
-          <h3 className="text-lg font-bold text-white mb-4 flex items-center">
-            <TrendingUp className="h-5 w-5 mr-2 text-blue-400" />
+        <div className="bg-white rounded-air shadow-air p-6 md:col-span-2">
+          <h3 className="text-lg font-bold text-[#222222] mb-4 flex items-center">
+            <TrendingUp className="h-5 w-5 mr-2 text-coral-500" />
             Per-Person Spending
           </h3>
           {analytics?.perPerson?.length > 0 ? (
@@ -159,12 +159,12 @@ const AnalyticsPage = () => {
                 legend: { display: false },
               },
               scales: {
-                x: { ticks: { color: '#9ca3af' }, grid: { color: '#1f2937' } },
-                y: { ticks: { color: '#9ca3af' }, grid: { color: '#1f2937' } }
+                x: { ticks: { color: '#717171' }, grid: { color: '#DDDDDD' } },
+                y: { ticks: { color: '#717171' }, grid: { color: '#DDDDDD' } }
               }
             }} />
           ) : (
-            <p className="text-gray-500 text-center py-8">No data yet</p>
+            <p className="text-[#717171] text-center py-8">No data yet</p>
           )}
         </div>
       </div>

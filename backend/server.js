@@ -164,7 +164,7 @@ async function initializeDatabase() {
         last_name VARCHAR(100) NOT NULL,
         email VARCHAR(255) NOT NULL UNIQUE,
         password VARCHAR(255) NOT NULL,
-        avatar VARCHAR(8) NOT NULL,
+        avatar VARCHAR(500) NOT NULL,
         role ENUM('admin', 'member') NOT NULL DEFAULT 'member',
         is_active BOOLEAN NOT NULL DEFAULT TRUE,
         upi_id VARCHAR(100) DEFAULT NULL,
@@ -249,6 +249,17 @@ async function initializeDatabase() {
         FOREIGN KEY (to_user) REFERENCES users(id) ON DELETE CASCADE
       ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
     `);
+
+    // Fix avatar column length for Google OAuth images
+    try {
+      await pool.query('ALTER TABLE users MODIFY COLUMN avatar VARCHAR(500) NOT NULL');
+      console.log('✓ Avatar column size updated to VARCHAR(500)');
+    } catch (e) {
+      // Column may already be the right size, that's fine
+      if (!e.message?.includes('Duplicate')) {
+        console.log('Note: avatar column alter skipped —', e.message);
+      }
+    }
 
     await pool.query(`
       CREATE TABLE IF NOT EXISTS shopping_items (
@@ -400,8 +411,14 @@ app.post('/api/auth/google', async (req, res) => {
   }
   const { credential } = req.body;
   if (!credential) return res.status(400).json({ success: false, message: 'Google credential token is required' });
-  const ticket = await googleClient.verifyIdToken({ idToken: credential, audience: process.env.GOOGLE_CLIENT_ID });
-  const payload = ticket.getPayload();
+  let payload;
+  try {
+    const ticket = await googleClient.verifyIdToken({ idToken: credential, audience: process.env.GOOGLE_CLIENT_ID });
+    payload = ticket.getPayload();
+  } catch (err) {
+    console.error('Google verifyIdToken failed:', err && err.message ? err.message : err);
+    return res.status(400).json({ success: false, message: 'Google token verification failed', detail: err && err.message ? err.message : String(err) });
+  }
   const googleId = payload.sub;
   const email = payload.email.toLowerCase().trim();
   const firstName = payload.given_name || email.split('@')[0];
@@ -898,35 +915,39 @@ app.post('/api/upload/receipt', authMiddleware, upload.single('receipt'), async 
 //  CRON: Auto-rotate recurring chores (run daily at 6 AM)
 // ═══════════════════════════════════════════════════════════════
 
-cron.schedule('0 6 * * *', async () => {
-  console.log('⏰ Running chore rotation check...');
-  const [recurringChores] = await pool.query(
-    `SELECT id, title, recurring_frequency, rotation_order, current_assignee_index,
-            assigned_to, due_date FROM chores WHERE is_recurring = 1 AND completed = 1`
-  );
-  for (const chore of recurringChores) {
-    if (!chore.rotation_order) continue;
-    const order = typeof chore.rotation_order === 'string' ? JSON.parse(chore.rotation_order) : chore.rotation_order;
-    if (order.length === 0) continue;
-
-    const nextIdx = (chore.current_assignee_index + 1) % order.length;
-    const nextUserId = order[nextIdx];
-    const [user] = await pool.query('SELECT id, first_name, last_name FROM users WHERE id = ?', [nextUserId]);
-    if (!user.length) continue;
-    const name = `${user[0].first_name} ${user[0].last_name}`;
-    const nextDue = new Date();
-    if (chore.recurring_frequency === 'weekly') nextDue.setDate(nextDue.getDate() + 7);
-    else if (chore.recurring_frequency === 'monthly') nextDue.setMonth(nextDue.getMonth() + 1);
-    else nextDue.setDate(nextDue.getDate() + 1);
-
-    await pool.query(
-      `UPDATE chores SET assigned_to = ?, assigned_to_name = ?, current_assignee_index = ?,
-       completed = 0, completed_at = NULL, due_date = ? WHERE id = ?`,
-      [nextUserId, name, nextIdx, nextDue.toISOString().split('T')[0], chore.id]
+try {
+  cron.schedule('0 6 * * *', async () => {
+    console.log('⏰ Running chore rotation check...');
+    const [recurringChores] = await pool.query(
+      `SELECT id, title, recurring_frequency, rotation_order, current_assignee_index,
+              assigned_to, due_date FROM chores WHERE is_recurring = 1 AND completed = 1`
     );
-    console.log(`🔄 Rotated chore "${chore.title}" to ${name}`);
-  }
-});
+    for (const chore of recurringChores) {
+      if (!chore.rotation_order) continue;
+      const order = typeof chore.rotation_order === 'string' ? JSON.parse(chore.rotation_order) : chore.rotation_order;
+      if (order.length === 0) continue;
+
+      const nextIdx = (chore.current_assignee_index + 1) % order.length;
+      const nextUserId = order[nextIdx];
+      const [user] = await pool.query('SELECT id, first_name, last_name FROM users WHERE id = ?', [nextUserId]);
+      if (!user.length) continue;
+      const name = `${user[0].first_name} ${user[0].last_name}`;
+      const nextDue = new Date();
+      if (chore.recurring_frequency === 'weekly') nextDue.setDate(nextDue.getDate() + 7);
+      else if (chore.recurring_frequency === 'monthly') nextDue.setMonth(nextDue.getMonth() + 1);
+      else nextDue.setDate(nextDue.getDate() + 1);
+
+      await pool.query(
+        `UPDATE chores SET assigned_to = ?, assigned_to_name = ?, current_assignee_index = ?,
+         completed = 0, completed_at = NULL, due_date = ? WHERE id = ?`,
+        [nextUserId, name, nextIdx, nextDue.toISOString().split('T')[0], chore.id]
+      );
+      console.log(`🔄 Rotated chore "${chore.title}" to ${name}`);
+    }
+  });
+} catch (error) {
+  console.error('Unable to start chore rotation cron task:', error.message || error);
+}
 
 // ═══════════════════════════════════════════════════════════════
 //  SWAGGER API DOCS
