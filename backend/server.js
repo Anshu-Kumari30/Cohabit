@@ -7,6 +7,7 @@ const mysql = require('mysql2/promise');
 const cron = require('node-cron');
 const multer = require('multer');
 const path = require('path');
+const fs = require('fs');
 const { z } = require('zod');
 require('express-async-errors');
 
@@ -964,6 +965,25 @@ const swaggerDefinition = {
 const swaggerOptions = { swaggerDefinition, apis: ['./server.js'] };
 const swaggerSpec = swaggerJsdoc(swaggerOptions);
 app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec));
+
+// Simple root route so visiting the service root doesn't return 404
+app.get('/', (req, res) => {
+  res.send('Cohabit API is running');
+});
+
+// If a frontend production build exists at ../frontend/build, serve it
+const frontendBuildPath = path.join(__dirname, '../frontend/build');
+if (fs.existsSync(frontendBuildPath)) {
+  app.use(express.static(frontendBuildPath));
+
+  app.get('*', (req, res) => {
+    // keep API and uploads routes intact
+    if (req.path.startsWith('/api') || req.path.startsWith('/uploads') || req.path.startsWith('/api-docs')) {
+      return res.status(404).json({ message: 'Not found' });
+    }
+    res.sendFile(path.join(frontendBuildPath, 'index.html'));
+  });
+}
 
 // ═══════════════════════════════════════════════════════════════
 //  START SERVER
