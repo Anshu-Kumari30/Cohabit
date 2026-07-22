@@ -9,9 +9,11 @@ const multer = require('multer');
 const path = require('path');
 const fs = require('fs');
 const { z } = require('zod');
+const http = require('http');
+const { initSocket } = require('./socket');
 require('express-async-errors');
 
-dotenv.config();
+dotenv.config({ path: path.join(__dirname, '.env') });
 
 const app = express();
 const allowedOrigins = [
@@ -55,6 +57,11 @@ const dbConfig = {
 };
 
 const pool = mysql.createPool(dbConfig);
+
+// ─── HTTP Server + Socket.io ───
+const server = http.createServer(app);
+const io = initSocket(server, pool, allowedOrigins);
+app.set('io', io);
 
 // ─── Zod Schemas ───
 const registerSchema = z.object({
@@ -259,6 +266,36 @@ async function initializeDatabase() {
       // Column may already be the right size, that's fine
       if (!e.message?.includes('Duplicate')) {
         console.log('Note: avatar column alter skipped —', e.message);
+      }
+    }
+
+    // ─── Migrate missing columns in existing tables ───
+    const migrations = [
+      { table: 'expenses', column: 'notes', type: 'TEXT DEFAULT NULL' },
+      { table: 'expenses', column: 'receipt_url', type: 'VARCHAR(500) DEFAULT NULL' },
+      { table: 'expenses', column: 'split_type', type: "ENUM('equal','percentage','custom') DEFAULT 'equal'" },
+      { table: 'expenses', column: 'paid_by_name', type: 'VARCHAR(255) DEFAULT NULL' },
+      { table: 'expenses', column: 'date', type: 'DATE DEFAULT NULL' },
+      { table: 'expenses', column: 'category', type: 'VARCHAR(255) DEFAULT NULL' },
+      { table: 'chores', column: 'description', type: 'TEXT DEFAULT NULL' },
+      { table: 'chores', column: 'completed_at', type: 'DATETIME DEFAULT NULL' },
+      { table: 'chores', column: 'is_recurring', type: 'BOOLEAN DEFAULT FALSE' },
+      { table: 'chores', column: 'recurring_frequency', type: "ENUM('daily','weekly','monthly') DEFAULT NULL" },
+      { table: 'chores', column: 'rotation_order', type: 'JSON DEFAULT NULL' },
+      { table: 'chores', column: 'current_assignee_index', type: 'INT DEFAULT 0' },
+      { table: 'chores', column: 'category', type: "VARCHAR(100) DEFAULT 'other'" },
+      { table: 'chores', column: 'assigned_to_name', type: 'VARCHAR(255) DEFAULT NULL' },
+    ];
+    for (const m of migrations) {
+      try {
+        await pool.query(`ALTER TABLE ${m.table} ADD COLUMN ${m.column} ${m.type}`);
+        console.log(`✓ Added ${m.table}.${m.column} column`);
+      } catch (e) {
+        if (e.message?.includes('Duplicate') || e.message?.includes('already exists')) {
+          // Column already exists, that's fine
+        } else {
+          console.log(`Note: ${m.table}.${m.column} alter skipped —`, e.message);
+        }
       }
     }
 
@@ -550,8 +587,18 @@ app.post('/api/expenses', async (req, res) => {
           'INSERT INTO notifications (user_id, type, message, related_id) VALUES (?, ?, ?, ?)',
           [s.userId, 'expense', `${data.paidByName || 'Someone'} added an expense "${data.description}" — ₹${Number(data.amount).toFixed(2)}`, expenseId]
         );
+        // Real-time notification to each user
+        try {
+          req.app.get('io').to(`user:${s.userId}`).emit('notification:new', {
+            type: 'expense',
+            message: `${data.paidByName || 'Someone'} added an expense "${data.description}" — ₹${Number(data.amount).toFixed(2)}`
+          });
+        } catch (e) {}
       }
     }
+
+    // Broadcast real-time event
+    try { req.app.get('io').emit('expense:added', expense[0]); } catch (e) { /* socket not ready */ }
 
     res.status(201).json({ success: true, expense: expense[0] });
   } catch (error) {
@@ -566,6 +613,10 @@ app.post('/api/expenses', async (req, res) => {
 app.delete('/api/expenses/:id', async (req, res) => {
   const [result] = await pool.query('DELETE FROM expenses WHERE id = ?', [Number(req.params.id)]);
   if (result.affectedRows === 0) return res.status(404).json({ success: false, message: 'Expense not found' });
+
+  // Broadcast real-time event
+  try { req.app.get('io').emit('expense:deleted', { id: Number(req.params.id) }); } catch (e) { /* socket not ready */ }
+
   res.json({ success: true, message: 'Expense deleted' });
 });
 
@@ -647,7 +698,12 @@ app.post('/api/chores', async (req, res) => {
       'INSERT INTO notifications (user_id, type, message, related_id) VALUES (?, ?, ?, ?)',
       [data.assignedTo, 'chore', `A new chore "${data.title}" has been assigned to you`, result.insertId]
     );
+    // Real-time notification
+    try { req.app.get('io').to(`user:${data.assignedTo}`).emit('notification:new', { type: 'chore', message: `A new chore "${data.title}" has been assigned to you` }); } catch (e) {}
   }
+
+  // Broadcast real-time event
+  try { req.app.get('io').emit('chore:added', chore[0]); } catch (e) { /* socket not ready */ }
 
   res.status(201).json({ success: true, chore: chore[0] });
 });
@@ -699,12 +755,20 @@ app.patch('/api/chores/:id/toggle', async (req, res) => {
             due_date AS dueDate, completed, priority, is_recurring AS isRecurring
      FROM chores WHERE id = ?`, [id]
   );
+
+  // Broadcast real-time event
+  try { req.app.get('io').emit('chore:updated', rows[0]); } catch (e) { /* socket not ready */ }
+
   res.json({ success: true, chore: rows[0] });
 });
 
 app.delete('/api/chores/:id', async (req, res) => {
   const [result] = await pool.query('DELETE FROM chores WHERE id = ?', [Number(req.params.id)]);
   if (result.affectedRows === 0) return res.status(404).json({ success: false, message: 'Chore not found' });
+
+  // Broadcast real-time event
+  try { req.app.get('io').emit('chore:deleted', { id: Number(req.params.id) }); } catch (e) { /* socket not ready */ }
+
   res.json({ success: true, message: 'Chore deleted' });
 });
 
@@ -737,6 +801,8 @@ app.post('/api/settlements', async (req, res) => {
     'INSERT INTO notifications (user_id, type, message, related_id) VALUES (?, ?, ?, ?)',
     [data.to, 'settlement', `You received a payment of ₹${Number(data.amount).toFixed(2)}`, result.insertId]
   );
+  // Real-time notification
+  try { req.app.get('io').to(`user:${data.to}`).emit('notification:new', { type: 'settlement', message: `You received a payment of ₹${Number(data.amount).toFixed(2)}` }); } catch (e) {}
 
   const [settlement] = await pool.query(
     `SELECT s.id, s.from_user AS fromUser, s.to_user AS toUser, s.amount, s.note, s.settled_at AS settledAt,
@@ -747,6 +813,9 @@ app.post('/api/settlements', async (req, res) => {
      JOIN users tu ON s.to_user = tu.id
      WHERE s.id = ?`, [result.insertId]
   );
+  // Broadcast real-time event
+  try { req.app.get('io').emit('settlement:added', settlement[0]); } catch (e) { /* socket not ready */ }
+
   res.status(201).json({ success: true, settlement: settlement[0] });
 });
 
@@ -817,6 +886,9 @@ app.post('/api/shopping-items', async (req, res) => {
      FROM shopping_items si JOIN users u ON si.added_by = u.id WHERE si.id = ?`,
     [result.insertId]
   );
+  // Broadcast real-time event
+  try { req.app.get('io').emit('shopping:added', item[0]); } catch (e) { /* socket not ready */ }
+
   res.status(201).json({ success: true, item: item[0] });
 });
 
@@ -833,11 +905,18 @@ app.patch('/api/shopping-items/:id/toggle', async (req, res) => {
   const [updated] = await pool.query(
     `SELECT id, name, is_checked AS isChecked, checked_by AS checkedBy FROM shopping_items WHERE id = ?`, [id]
   );
+  // Broadcast real-time event
+  try { req.app.get('io').emit('shopping:updated', updated[0]); } catch (e) { /* socket not ready */ }
+
   res.json({ success: true, item: updated[0] });
 });
 
 app.delete('/api/shopping-items/:id', async (req, res) => {
   await pool.query('DELETE FROM shopping_items WHERE id = ?', [Number(req.params.id)]);
+
+  // Broadcast real-time event
+  try { req.app.get('io').emit('shopping:deleted', { id: Number(req.params.id) }); } catch (e) { /* socket not ready */ }
+
   res.json({ success: true, message: 'Item deleted' });
 });
 
@@ -856,11 +935,15 @@ app.get('/api/notifications', authMiddleware, async (req, res) => {
 app.patch('/api/notifications/:id/read', authMiddleware, async (req, res) => {
   await pool.query('UPDATE notifications SET is_read = TRUE WHERE id = ? AND user_id = ?',
     [Number(req.params.id), req.user.id]);
+  // Notify the user that notification was read
+  try { req.app.get('io').to(`user:${req.user.id}`).emit('notification:read', { id: Number(req.params.id) }); } catch (e) {}
   res.json({ success: true });
 });
 
 app.patch('/api/notifications/read-all', authMiddleware, async (req, res) => {
   await pool.query('UPDATE notifications SET is_read = TRUE WHERE user_id = ?', [req.user.id]);
+  // Notify the user that all notifications were read
+  try { req.app.get('io').to(`user:${req.user.id}`).emit('notification:read-all'); } catch (e) {}
   res.json({ success: true });
 });
 
@@ -991,7 +1074,7 @@ if (fs.existsSync(frontendBuildPath)) {
 
 initializeDatabase()
   .then(() => {
-    app.listen(PORT, () => {
+    server.listen(PORT, () => {
       console.log('\n' + '='.repeat(60));
       console.log('🚀  COHABIT SERVER STARTED');
       console.log('📍  URL:     http://localhost:' + PORT);

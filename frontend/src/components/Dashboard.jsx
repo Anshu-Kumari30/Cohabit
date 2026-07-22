@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { Home, Users, DollarSign, CheckSquare, Bell, LogOut, Plus, X, Trash2, TrendingUp, ShoppingCart, User, Send } from 'lucide-react';
 import { expensesAPI, choresAPI, usersAPI, balancesAPI, settlementsAPI, shoppingAPI, notificationsAPI } from '../services/api';
+import { connectSocket, disconnectSocket } from '../services/socket';
 import { toast } from 'react-toastify';
 import Avatar from './Avatar';
 import EmptyState from './EmptyState';
@@ -83,6 +84,66 @@ const Dashboard = ({ setIsAuthenticated }) => {
 
   useEffect(() => { fetchData(); }, [fetchData]);
 
+  // ─── Real-time Socket Events ───
+  useEffect(() => {
+    const token = localStorage.getItem('token');
+    if (!token) return;
+
+    const socket = connectSocket(token);
+
+    // Data mutation events → refresh everything
+    const refreshEvents = [
+      'expense:added', 'expense:deleted',
+      'chore:added', 'chore:updated', 'chore:deleted',
+      'settlement:added',
+      'shopping:added', 'shopping:updated', 'shopping:deleted',
+    ];
+
+    const handleRefresh = () => {
+      fetchData();
+    };
+
+    refreshEvents.forEach(event => socket.on(event, handleRefresh));
+
+    // Real-time notification alerts
+    socket.on('notification:new', (data) => {
+      // Immediately show the notification in the panel
+      const newNotif = {
+        id: Date.now(), // temporary id until refresh
+        type: data.type,
+        message: data.message,
+        isRead: false,
+        createdAt: new Date().toISOString(),
+      };
+      setNotifications(prev => [newNotif, ...prev]);
+      setUnreadCount(prev => prev + 1);
+      // Also show a toast for important notifications
+      toast.info(data.message, { autoClose: 4000 });
+    });
+
+    socket.on('notification:read', (data) => {
+      setNotifications(prev =>
+        prev.map(n => n.id === data.id ? { ...n, isRead: true } : n)
+      );
+      setUnreadCount(prev => Math.max(0, prev - 1));
+    });
+
+    socket.on('notification:read-all', () => {
+      setNotifications(prev =>
+        prev.map(n => ({ ...n, isRead: true }))
+      );
+      setUnreadCount(0);
+    });
+
+    return () => {
+      refreshEvents.forEach(event => socket.off(event, handleRefresh));
+      socket.off('notification:new');
+      socket.off('notification:read');
+      socket.off('notification:read-all');
+      disconnectSocket();
+    };
+  }, [fetchData]);
+
   // ─── Handlers ───
   const handleLogout = () => { setIsAuthenticated(); };
 
@@ -91,8 +152,11 @@ const Dashboard = ({ setIsAuthenticated }) => {
     if (!newExpense.description || !newExpense.amount) {
       toast.error('Please fill in all required fields'); return;
     }
+    const paidById = Number(newExpense.paidBy);
+    if (!paidById || paidById <= 0) {
+      toast.error('Please select who paid'); return;
+    }
     try {
-      const paidById = Number(newExpense.paidBy);
       const paidByName = roommates.find(r => r.id === paidById)?.name || currentUser?.firstName + ' ' + currentUser?.lastName;
       const category = newExpense.category === 'other' ? newExpense.customCategory : newExpense.category;
 
@@ -483,7 +547,7 @@ const Dashboard = ({ setIsAuthenticated }) => {
               <div className="card-air p-6">
                 <h3 className="text-lg font-bold text-[#222222] mb-4">Recent Expenses</h3>
                 {expenses.length === 0 ? (
-                  <EmptyState title="No expenses yet" description="Add your first expense to get started" actionLabel="Add Expense" onAction={() => setShowAddExpenseModal(true)} />
+                  <EmptyState title="No expenses yet" description="Add your first expense to get started" actionLabel="Add Expense" onAction={() => { resetExpenseForm(); setShowAddExpenseModal(true); }} />
                 ) : (
                   <div className="space-y-3">
                     {expenses.slice(0, 5).map(expense => (
@@ -542,14 +606,14 @@ const Dashboard = ({ setIsAuthenticated }) => {
           <div>
             <div className="flex justify-between items-center mb-6">
               <h2 className="text-2xl font-bold text-[#222222]">Expenses</h2>
-              <button onClick={() => setShowAddExpenseModal(true)}
+              <button onClick={() => { resetExpenseForm(); setShowAddExpenseModal(true); }}
                 className="bg-coral-500 hover:bg-coral-600 text-white px-4 py-2.5 rounded-pill font-semibold transition-all shadow-air-sm hover:shadow-air flex items-center">
                 <Plus className="h-5 w-5 mr-2" /> Add Expense
               </button>
             </div>
             <div className="space-y-4">
               {expenses.length === 0 ? (
-                <EmptyState icon={DollarSign} title="No expenses yet" description="Add your first expense to start tracking" actionLabel="Add Expense" onAction={() => setShowAddExpenseModal(true)} />
+                <EmptyState icon={DollarSign} title="No expenses yet" description="Add your first expense to start tracking" actionLabel="Add Expense" onAction={() => { resetExpenseForm(); setShowAddExpenseModal(true); }} />
               ) : expenses.map(expense => (
                 <div key={expense.id} className="card-air p-6 transition-all duration-200 hover:shadow-air-lg">
                   <div className="flex justify-between items-start">
